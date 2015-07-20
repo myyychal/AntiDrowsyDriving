@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/flagItem1" android:title="CV_HAAR_DO_CANNY_PRUNING"></item>
+    <item android:id="@+id/flagItem2" android:title="CV_HAAR_SCALE_IMAGE"></item>
+    <item android:id="@+id/flagItem3" android:title="CV_HAAR_FIND_BIGGEST_OBJECT"></item>
+    <item android:id="@+id/flagItem4" android:title="CV_HAAR_DO_ROUGH_SEARCH"></item>
+</menu>

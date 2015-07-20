@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/eyesItem1" android:title="haarcascade_eye_tree_eyeglasses"></item>
+    <item android:id="@+id/eyesItem2" android:title="haarcascade_eye"></item>
+    <item android:id="@+id/eyesItem3" android:title="haarcascade_lefteye_2splits"></item>
+    <item android:id="@+id/eyesItem4" android:title="haarcascade_mcs_eyepair_big"></item>
+    <item android:id="@+id/eyesItem5" android:title="haarcascade_mcs_eyepair_small"></item>
+    <item android:id="@+id/eyesItem6" android:title="haarcascade_mcs_lefteye"></item>
+    <item android:id="@+id/eyesItem7" android:title="haarcascade_mcs_righteye"></item>
+    <item android:id="@+id/eyesItem8" android:title="haarcascade_righteye_2splits"></item>
+</menu>
