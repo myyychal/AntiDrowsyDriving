@@ -73,6 +73,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
 
 	private static final int VIEW_MODE_NONE = 0;
+	private static final int VIEW_MODE_EQ_NONE = 3;
 	private static final int VIEW_MODE_EQ_HIST_CPP = 5;
 	private static final int VIEW_MODE_EQ_HIST_CLAHE_CPP = 4;
 	private static final int VIEW_MODE_FIND_FACE_SNAPDRAGON = 6;
@@ -89,6 +90,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private static final int VIEW_MODE_FIND_CORNER_HARRIS_CPP = 18;
 	private static final int VIEW_MODE_OPTICAL_FLOW_JAVA = 17;
 	private static final int VIEW_MODE_OPTICAL_FLOW_CPP = 19;
+	private static final int VIEW_MODE_START_DROWSINESS_DETECTION = 20;
 
 	private int mViewMode;
 	private int mEqHistMode;
@@ -741,7 +743,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		final int eqHistMode = mEqHistMode;
 
 		switch (eqHistMode) {
-		case VIEW_MODE_NONE:
+		case VIEW_MODE_EQ_NONE:
 			break;
 
 		case VIEW_MODE_EQ_HIST_CPP:
@@ -756,6 +758,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		}
 
 		switch (viewMode) {
+		
+		case VIEW_MODE_NONE:
+			break;
+		
 		case VIEW_MODE_FIND_FACE_SNAPDRAGON:
 			snapdragonFacialFeaturesDetector.findFace(mRgba, this
 					.getResources().getConfiguration().orientation);
@@ -919,6 +925,29 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			CalculateOpticalFlow(mRgba.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 			
+		case VIEW_MODE_START_DROWSINESS_DETECTION:
+			currentlyUsedFrame = mGray;
+			EqualizeHistogram(mGray.getNativeObjAddr());
+			ApplyCLAHEExt(mGray.getNativeObjAddr(),
+					(double) currentClipLimit, (double) currentTileSize,
+					(double) currentTileSize);
+			Rect foundFaceInDetection;
+			if (isFaceTracking) {
+				foundFaceInDetection = cascadeFaceDetector.findFace(mGray);
+			} else {
+				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
+			}
+			if (foundFaceInDetection != null) {
+				foundFaceInDetection.height = foundFaceInDetection.height/2;
+				foundFaceInDetection.y = (int) (foundFaceInDetection.y + 0.1 * mGray.height()); 
+				VisualUtils.drawRect(foundFaceInDetection, currentlyUsedFrame,
+						DrawingConstants.FACE_RECT_COLOR);
+				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFaceInDetection);
+				VisualUtils.drawRects(eyes, currentlyUsedFrame,
+						DrawingConstants.EYES_RECT_COLOR);
+			}
+			break;
+			
 		}
 
 		return currentlyUsedFrame;
@@ -966,7 +995,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		} else if (item.getGroupId() == 4) {
 			switch (item.getItemId()) {
 			case 0:
-				mEqHistMode = VIEW_MODE_NONE;
+				mEqHistMode = VIEW_MODE_EQ_NONE;
 				break;
 			case 1:
 				mEqHistMode = VIEW_MODE_EQ_HIST_CPP;
@@ -998,6 +1027,22 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 		}
 		return true;
+	}
+	
+	public void resetView(View v){
+		mViewMode = VIEW_MODE_NONE;
+		mEqHistMode = VIEW_MODE_EQ_NONE;
+	}
+	
+	public void startDrowsinessDetection(View v){
+		switch (mViewMode){
+		case VIEW_MODE_START_DROWSINESS_DETECTION:
+			mViewMode = VIEW_MODE_NONE;
+			break;
+		case VIEW_MODE_NONE:
+			mViewMode = VIEW_MODE_START_DROWSINESS_DETECTION; 
+			break;
+		}
 	}
 
 	public native void EqualizeHistogram(long matAddrGr);

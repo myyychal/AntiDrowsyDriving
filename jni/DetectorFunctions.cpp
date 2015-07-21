@@ -25,8 +25,9 @@
 using namespace std;
 using namespace cv;
 
-#define LOG_TAG "AntiDrowsyDriving::MainFunctions"
+#define LOG_TAG "AntiDrowsyDriving::DetectorFunctions"
 #define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
 
 extern "C" {
+
 }

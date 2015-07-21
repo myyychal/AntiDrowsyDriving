@@ -267,7 +267,17 @@
         android:layout_column="2"
         android:layout_gravity="center_horizontal|top"
         android:layout_row="6"
+        android:onClick="startDrowsinessDetection"
         android:text="Start detection" />
+
+    <Button
+        android:id="@+id/reset"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_column="2"
+        android:layout_gravity="right|center_vertical"
+        android:layout_row="1"
+        android:onClick="resetView"
+        android:text="RESET" />
 
 </GridLayout>
 	
