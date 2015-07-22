@@ -27,6 +27,9 @@ import org.opencv.video.Video;
 
 import android.app.Activity;
 import android.content.Context;
+import android.hardware.Camera.Face;
+import android.hardware.Camera.FaceDetectionListener;
+import android.hardware.Camera;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,11 +52,14 @@ import android.widget.VerticalSeekBar;
 
 import com.mpanek.constants.DetectorConstants;
 import com.mpanek.constants.DrawingConstants;
+import com.mpanek.constants.ViewModesConstants;
 import com.mpanek.detection.SnapdragonFacialFeaturesDetector;
 import com.mpanek.detection.eyes.CascadeEyesDetector;
 import com.mpanek.detection.face.CascadeFaceDetector;
 import com.mpanek.detection.face.ColorSegmentationFaceDetector;
 import com.mpanek.detection.mouth.CascadeMouthDetector;
+import com.mpanek.detection.nose.CascadeNoseDetector;
+import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.MathUtils;
 import com.mpanek.utils.VisualUtils;
 import com.mpanek.views.camera.CustomCameraView;
@@ -71,26 +77,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	TextView tileSizeValueText;
 
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
-
-	private static final int VIEW_MODE_NONE = 0;
-	private static final int VIEW_MODE_EQ_NONE = 3;
-	private static final int VIEW_MODE_EQ_HIST_CPP = 5;
-	private static final int VIEW_MODE_EQ_HIST_CLAHE_CPP = 4;
-	private static final int VIEW_MODE_FIND_FACE_SNAPDRAGON = 6;
-	private static final int VIEW_MODE_FIND_FACE_CASCADE_JAVA = 7;
-	private static final int VIEW_MODE_FIND_FACE_CASCADE_CPP = 8;
-	private static final int VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA = 12;
-	private static final int VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP = 13;
-	private static final int VIEW_MODE_FIND_EYES_CASCADE_JAVA = 9;
-	private static final int VIEW_MODE_FIND_EYES_CASCADE_CPP = 10;
-	private static final int VIEW_MODE_FIND_MOUTH_CASCADE_JAVA = 11;
-	private static final int VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA = 14;
-	private static final int VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP = 15;
-	private static final int VIEW_MODE_FIND_CORNER_HARRIS_JAVA = 16;
-	private static final int VIEW_MODE_FIND_CORNER_HARRIS_CPP = 18;
-	private static final int VIEW_MODE_OPTICAL_FLOW_JAVA = 17;
-	private static final int VIEW_MODE_OPTICAL_FLOW_CPP = 19;
-	private static final int VIEW_MODE_START_DROWSINESS_DETECTION = 20;
 
 	private int mViewMode;
 	private int mEqHistMode;
@@ -124,6 +110,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	CascadeFaceDetector cascadeFaceDetector;
 	CascadeEyesDetector cascadeEyesDetector;
 	CascadeMouthDetector cascadeMouthDetector;
+	CascadeNoseDetector cascadeNoseDetector;
 	ColorSegmentationFaceDetector colorSegmentationFaceDetector;
 
 	OrientationEventListener orientationEventListener;
@@ -163,6 +150,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						"haarcascade_mcs_mouth", "raw", getPackageName());
 				is = getResources().openRawResource(mouthResourceId);
 				cascadeMouthDetector.prepare(is, cascadeDir);
+				
+				int noseResourceId = getResources().getIdentifier(
+						"haarcascade_mcs_nose", "raw", getPackageName());
+				is = getResources().openRawResource(noseResourceId);
+				cascadeNoseDetector.prepare(is, cascadeDir);
 
 				mCustomCameraView.enableView();
 
@@ -197,6 +189,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			mCustomCameraView.enableView();
 		}
 		return super.onTouchEvent(event);
+
 	}
 
 	/** Called when the activity is first created. */
@@ -223,6 +216,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		cascadeFaceDetector = new CascadeFaceDetector();
 		cascadeEyesDetector = new CascadeEyesDetector();
 		cascadeMouthDetector = new CascadeMouthDetector();
+		cascadeNoseDetector = new CascadeNoseDetector();
 
 		colorSegmentationFaceDetector = new ColorSegmentationFaceDetector();
 
@@ -250,11 +244,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						scaleFactorValueText.setText(String.valueOf(MathUtils
 								.round(currentValue, 2)));
 						switch (mViewMode) {
-						case VIEW_MODE_FIND_FACE_CASCADE_JAVA:
+						case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 							cascadeFaceDetector.setScaleFactor(currentValue);
 							break;
 
-						case VIEW_MODE_FIND_EYES_CASCADE_JAVA:
+						case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
 							cascadeEyesDetector.setScaleFactor(currentValue);
 							break;
 						}
@@ -285,11 +279,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						minNeighsValueText.setText(String.valueOf(MathUtils
 								.round(currentValue, 2)));
 						switch (mViewMode) {
-						case VIEW_MODE_FIND_FACE_CASCADE_JAVA:
+						case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 							cascadeFaceDetector.setMinNeighbours(currentValue);
 							break;
 
-						case VIEW_MODE_FIND_EYES_CASCADE_JAVA:
+						case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
 							cascadeEyesDetector.setMinNeighbours(currentValue);
 							break;
 						}
@@ -616,6 +610,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				cascadeFaceDetector.setDetectionFlag(detectionFlag);
 				cascadeEyesDetector.setDetectionFlag(detectionFlag);
 				cascadeMouthDetector.setDetectionFlag(detectionFlag);
+				cascadeNoseDetector.setDetectionFlag(detectionFlag);
 				return false;
 			}
 		});
@@ -629,6 +624,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewFindFaceMenu = menu.addSubMenu("Find face");
 		mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
 		mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
+		menu.add(6, 0, Menu.NONE, "Find nose");
 		mItemPreviewOtherMenu = menu.addSubMenu("Other");
 
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
@@ -680,6 +676,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public void onCameraViewStarted(int width, int height) {
+		
 		mRgba = new Mat(height, width, CvType.CV_8UC4);
 		currentlyUsedFrame = new Mat();
 		mGray = new Mat(height, width, CvType.CV_8UC1);
@@ -743,14 +740,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		final int eqHistMode = mEqHistMode;
 
 		switch (eqHistMode) {
-		case VIEW_MODE_EQ_NONE:
+		case ViewModesConstants.VIEW_MODE_EQ_NONE:
 			break;
 
-		case VIEW_MODE_EQ_HIST_CPP:
+		case ViewModesConstants.VIEW_MODE_EQ_HIST_CPP:
 			EqualizeHistogram(currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_EQ_HIST_CLAHE_CPP:
+		case ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP:
 			ApplyCLAHEExt(currentlyUsedFrame.getNativeObjAddr(),
 					(double) currentClipLimit, (double) currentTileSize,
 					(double) currentTileSize);
@@ -759,38 +756,38 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		switch (viewMode) {
 		
-		case VIEW_MODE_NONE:
+		case ViewModesConstants.VIEW_MODE_NONE:
 			break;
 		
-		case VIEW_MODE_FIND_FACE_SNAPDRAGON:
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_SNAPDRAGON:
 			snapdragonFacialFeaturesDetector.findFace(mRgba, this
 					.getResources().getConfiguration().orientation);
 			break;
 
-		case VIEW_MODE_FIND_FACE_CASCADE_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 			Rect face = cascadeFaceDetector.findFace(currentlyUsedFrame);
 			if (face != null) {
-				VisualUtils.drawRect(face, currentlyUsedFrame,
+				DrawingUtils.drawRect(face, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
 			}
 			break;
 
-		case VIEW_MODE_FIND_FACE_CASCADE_CPP:
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP:
 			FindFace(currentlyUsedFrame.getNativeObjAddr(),
 					currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA:
 			currentlyUsedFrame = colorSegmentationFaceDetector
 					.detectFaceYCrCb(currentlyUsedFrame);
 			break;
 
-		case VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP:
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP:
 			SegmentSkin(mRgba.getNativeObjAddr(),
 					currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_FIND_EYES_CASCADE_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
 			Rect foundFace;
 			if (isFaceTracking) {
 				foundFace = cascadeFaceDetector.findFace(mGray);
@@ -798,20 +795,20 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace != null) {
-				VisualUtils.drawRect(foundFace, currentlyUsedFrame,
+				DrawingUtils.drawRect(foundFace, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
 				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFace);
-				VisualUtils.drawRects(eyes, currentlyUsedFrame,
+				DrawingUtils.drawRects(eyes, currentlyUsedFrame,
 						DrawingConstants.EYES_RECT_COLOR);
 			}
 			break;
 
-		case VIEW_MODE_FIND_EYES_CASCADE_CPP:
+		case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_CPP:
 			FindEyes(currentlyUsedFrame.getNativeObjAddr(),
 					currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_FIND_MOUTH_CASCADE_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_MOUTH_CASCADE_JAVA:
 			Rect foundFace2;
 			if (isFaceTracking) {
 				foundFace2 = cascadeFaceDetector.findFace(currentlyUsedFrame);
@@ -819,22 +816,39 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace2 = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace2 != null) {
-				VisualUtils.drawRect(foundFace2, currentlyUsedFrame,
+				DrawingUtils.drawRect(foundFace2, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
 				if (isMouthWithEyes) {
 					Rect[] eyes = cascadeEyesDetector.findEyes(
 							currentlyUsedFrame, foundFace2);
-					VisualUtils.drawRects(eyes, currentlyUsedFrame,
+					DrawingUtils.drawRects(eyes, currentlyUsedFrame,
 							DrawingConstants.EYES_RECT_COLOR);
 				}
 				Rect[] mouths = cascadeMouthDetector.findMouth(
 						currentlyUsedFrame, foundFace2);
-				VisualUtils.drawRects(mouths, currentlyUsedFrame,
+				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
 						DrawingConstants.MOUTH_RECT_COLOR);
 			}
 			break;
+			
+		case ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA:
+			Rect foundFace3;
+			if (isFaceTracking) {
+				foundFace3 = cascadeFaceDetector.findFace(currentlyUsedFrame);
+			} else {
+				foundFace3 = cascadeFaceDetector.getLastFoundFace();
+			}
+			if (foundFace3 != null) {
+				DrawingUtils.drawRect(foundFace3, currentlyUsedFrame,
+						DrawingConstants.FACE_RECT_COLOR);
+				Rect[] noses = cascadeNoseDetector.findNose(
+						currentlyUsedFrame, foundFace3);
+				DrawingUtils.drawRects(noses, currentlyUsedFrame,
+						DrawingConstants.NOSE_RECT_COLOR);
+			}
+			break;
 
-		case VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA:
 			MatOfPoint cornersPoints = new MatOfPoint();
 			Imgproc.goodFeaturesToTrack(mGray, cornersPoints, 100, 0.01, 10);
 			int rows = cornersPoints.rows();
@@ -845,12 +859,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 			break;
 
-		case VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP:
+		case ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP:
 			FindFeatures(mGray.getNativeObjAddr(),
 					currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_FIND_CORNER_HARRIS_JAVA:
+		case ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_JAVA:
 			Mat dst = Mat.zeros(mGray.size(), CvType.CV_32FC1);
 			Mat dst_norm = new Mat();
 			Mat dst_norm_scaled = new Mat();
@@ -868,11 +882,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			currentlyUsedFrame = dst_norm_scaled;
 			break;
 			
-		case VIEW_MODE_FIND_CORNER_HARRIS_CPP:
+		case ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_CPP:
 			FindCornerHarris(mGray.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
-		case VIEW_MODE_OPTICAL_FLOW_JAVA:
+		case ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_JAVA:
 			if (mMOP2fptsPrev.rows() == 0) {
 
 				Imgproc.cvtColor(mRgba, matOpFlowThis, Imgproc.COLOR_RGBA2GRAY);
@@ -921,30 +935,42 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 			break;
 			
-		case VIEW_MODE_OPTICAL_FLOW_CPP:
+		case ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_CPP:
 			CalculateOpticalFlow(mRgba.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 			
-		case VIEW_MODE_START_DROWSINESS_DETECTION:
-			currentlyUsedFrame = mGray;
-			EqualizeHistogram(mGray.getNativeObjAddr());
+		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
+			//currentlyUsedFrame = mGray;
 			ApplyCLAHEExt(mGray.getNativeObjAddr(),
 					(double) currentClipLimit, (double) currentTileSize,
 					(double) currentTileSize);
 			Rect foundFaceInDetection;
 			if (isFaceTracking) {
-				foundFaceInDetection = cascadeFaceDetector.findFace(mGray);
+				Rect boundingBox = new Rect(0,0,mGray.width(),mGray.height());
+				double boundingMultiplier = 0.1;
+				boundingBox.x += boundingMultiplier*mGray.width();
+				boundingBox.width -= 2*boundingMultiplier*mGray.width();
+				foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
 			} else {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFaceInDetection != null) {
-				foundFaceInDetection.height = foundFaceInDetection.height/2;
-				foundFaceInDetection.y = (int) (foundFaceInDetection.y + 0.1 * mGray.height()); 
-				VisualUtils.drawRect(foundFaceInDetection, currentlyUsedFrame,
+				Rect foundFaceForEyes = foundFaceInDetection.clone();
+				foundFaceForEyes.height /= 2;
+				foundFaceForEyes.y = (int) (foundFaceForEyes.y + 0.1 * mGray.height()); 
+				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes);
+
+				Rect foundFaceForMouth = foundFaceInDetection.clone();
+				foundFaceForMouth.height /= 2;
+				foundFaceForMouth.y = foundFaceForMouth.y + foundFaceForMouth.height;
+				Rect mouths[] = cascadeMouthDetector.findMouth(mGray, foundFaceForMouth);
+				
+				DrawingUtils.drawRect(foundFaceInDetection, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
-				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFaceInDetection);
-				VisualUtils.drawRects(eyes, currentlyUsedFrame,
+				DrawingUtils.drawRects(eyes, currentlyUsedFrame,
 						DrawingConstants.EYES_RECT_COLOR);
+				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
+						DrawingConstants.MOUTH_RECT_COLOR);
 			}
 			break;
 			
@@ -957,72 +983,78 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		if (item.getGroupId() == 1) {
 			switch (item.getItemId()) {
 			case 0:
-				mViewMode = VIEW_MODE_FIND_FACE_SNAPDRAGON;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_SNAPDRAGON;
 				break;
 			case 1:
-				mViewMode = VIEW_MODE_FIND_FACE_CASCADE_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA;
 				break;
 			case 2:
-				mViewMode = VIEW_MODE_FIND_FACE_CASCADE_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP;
 				break;
 			case 3:
-				mViewMode = VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA;
 				break;
 			case 4:
-				mViewMode = VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP;
 				break;
 			}
 		} else if (item.getGroupId() == 2) {
 			switch (item.getItemId()) {
 			case 0:
-				mViewMode = VIEW_MODE_FIND_EYES_CASCADE_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA;
 				break;
 			case 1:
-				mViewMode = VIEW_MODE_FIND_EYES_CASCADE_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_CPP;
 				break;
 			}
 		} else if (item.getGroupId() == 3) {
 			switch (item.getItemId()) {
 			case 0:
-				mViewMode = VIEW_MODE_FIND_MOUTH_CASCADE_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_MOUTH_CASCADE_JAVA;
 				isMouthWithEyes = false;
 				break;
 			case 1:
-				mViewMode = VIEW_MODE_FIND_MOUTH_CASCADE_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_MOUTH_CASCADE_JAVA;
 				isMouthWithEyes = true;
 				break;
 			}
 		} else if (item.getGroupId() == 4) {
 			switch (item.getItemId()) {
 			case 0:
-				mEqHistMode = VIEW_MODE_EQ_NONE;
+				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_NONE;
 				break;
 			case 1:
-				mEqHistMode = VIEW_MODE_EQ_HIST_CPP;
+				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_HIST_CPP;
 				break;
 			case 2:
-				mEqHistMode = VIEW_MODE_EQ_HIST_CLAHE_CPP;
+				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP;
 				break;
 			}
 		} else if (item.getGroupId() == 5) {
 			switch (item.getItemId()) {
 			case 0:
-				mViewMode = VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA;
 				break;
 			case 1:
-				mViewMode = VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP;
 				break;
 			case 2:
-				mViewMode = VIEW_MODE_FIND_CORNER_HARRIS_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_JAVA;
 				break;
 			case 3:
-				mViewMode = VIEW_MODE_FIND_CORNER_HARRIS_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_CPP;
 				break;
 			case 4:
-				mViewMode = VIEW_MODE_OPTICAL_FLOW_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_JAVA;
 				break;
 			case 5:
-				mViewMode = VIEW_MODE_OPTICAL_FLOW_CPP;
+				mViewMode = ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_CPP;
+				break;
+			}
+		} else if (item.getGroupId() == 6){
+			switch (item.getItemId()){
+			case 0:
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA;
 				break;
 			}
 		}
@@ -1030,17 +1062,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 	
 	public void resetView(View v){
-		mViewMode = VIEW_MODE_NONE;
-		mEqHistMode = VIEW_MODE_EQ_NONE;
+		mViewMode = ViewModesConstants.VIEW_MODE_NONE;
+		mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_NONE;
 	}
 	
 	public void startDrowsinessDetection(View v){
 		switch (mViewMode){
-		case VIEW_MODE_START_DROWSINESS_DETECTION:
-			mViewMode = VIEW_MODE_NONE;
+		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
+			mViewMode = ViewModesConstants.VIEW_MODE_NONE;
 			break;
-		case VIEW_MODE_NONE:
-			mViewMode = VIEW_MODE_START_DROWSINESS_DETECTION; 
+		case ViewModesConstants.VIEW_MODE_NONE:
+			mViewMode = ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION; 
 			break;
 		}
 	}

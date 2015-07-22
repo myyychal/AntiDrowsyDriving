@@ -6,279 +6,330 @@
     android:gravity="clip_horizontal" >
 
     <com.mpanek.views.camera.CustomCameraView
+        android:id="@+id/custom_camera_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:visibility="gone"
-        opencv:show_fps="true"
-        opencv:camera_id="any" 
-        android:id="@+id/custom_camera_view"
-	/>
-    
-	<GridLayout 
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:columnCount="6"
-    android:rowCount="7" >
-    
-	    <Space 
-	        android:layout_rowSpan="7"
-	        android:layout_column="2"
-	        android:layout_width="465dp"
-	        android:layout_height="match_parent"/>
+        opencv:camera_id="any"
+        opencv:show_fps="true" />
 
-    <android.widget.VerticalSeekBar
-        android:id="@+id/scaleFactorSeekBar"
-        android:layout_column="0"
-        android:layout_gravity="left|fill_vertical"
-        android:layout_row="2" 
-        android:layout_height="80dp"/>
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:columnCount="6"
+        android:rowCount="7" >
 
-    <android.widget.VerticalSeekBar
-        android:id="@+id/minNeighsSeekBar"
-        android:layout_column="1"
-        android:layout_gravity="left|fill_vertical"
-        android:layout_row="2" 
-        android:layout_height="80dp"/>
+        <Space
+            android:layout_width="465dp"
+            android:layout_height="match_parent"
+            android:layout_column="2"
+            android:layout_rowSpan="7" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView1"
-        android:layout_column="0"
-        android:layout_gravity="left"
-        android:layout_row="1"
-        android:text="scaleFactor" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/scaleFactorSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="0"
+            android:layout_gravity="left|fill_vertical"
+            android:layout_row="2" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView2"
-        android:layout_column="1"
-        android:layout_gravity="left"
-        android:layout_row="1"
-        android:text="minNeigbrs" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/minNeighsSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="1"
+            android:layout_gravity="left|fill_vertical"
+            android:layout_row="2" />
 
-    <TextView
-        android:id="@+id/scaleFactorValueText"
-        android:layout_column="0"
-        android:layout_gravity="left"
-        android:layout_row="0"
-        android:text="0" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView1"
+            android:layout_column="0"
+            android:layout_gravity="left"
+            android:layout_row="1"
+            android:text="scaleFactor" />
 
-    <TextView
-        android:id="@+id/minNeighboursValueText"
-        android:layout_column="1"
-        android:layout_gravity="left"
-        android:layout_row="0"
-        android:text="0" />
-    
-      <android.widget.VerticalSeekBar
-        android:id="@+id/clipLimitSeekBar"
-        android:layout_column="0"
-        android:layout_gravity="left|fill_vertical"
-        android:layout_row="5" 
-        android:layout_height="80dp"/>
+        <android.widget.VerticalTextView
+            android:id="@+id/textView2"
+            android:layout_column="1"
+            android:layout_gravity="left"
+            android:layout_row="1"
+            android:text="minNeigbrs" />
 
-    <android.widget.VerticalSeekBar
-        android:id="@+id/tilesSizeSeekBar"
-        android:layout_column="1"
-        android:layout_gravity="left|fill_vertical"
-        android:layout_row="5" 
-        android:layout_height="80dp"/>
+        <TextView
+            android:id="@+id/scaleFactorValueText"
+            android:layout_column="0"
+            android:layout_gravity="left"
+            android:layout_row="0"
+            android:text="0" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView7"
-        android:layout_column="0"
-        android:layout_gravity="left"
-        android:layout_row="4"
-        android:text="clipLimit" />
+        <TextView
+            android:id="@+id/minNeighboursValueText"
+            android:layout_column="1"
+            android:layout_gravity="left"
+            android:layout_row="0"
+            android:text="0" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView8"
-        android:layout_column="1"
-        android:layout_gravity="left"
-        android:layout_row="4"
-        android:text="tilesSize" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/clipLimitSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="0"
+            android:layout_gravity="left|fill_vertical"
+            android:layout_row="5" />
 
-    <TextView
-        android:id="@+id/clipLimitValueText"
-        android:layout_column="0"
-        android:layout_gravity="left"
-        android:layout_row="3"
-        android:text="0" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/tilesSizeSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="1"
+            android:layout_gravity="left|fill_vertical"
+            android:layout_row="5" />
 
-    <TextView
-        android:id="@+id/tilesSizeValueText"
-        android:layout_column="1"
-        android:layout_gravity="left"
-        android:layout_row="3"
-        android:text="0" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView7"
+            android:layout_column="0"
+            android:layout_gravity="left"
+            android:layout_row="4"
+            android:text="clipLimit" />
 
-    <Button
-        android:id="@+id/optionsButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="0"
-        android:layout_columnSpan="2"
-        android:layout_gravity="left"
-        android:layout_row="6"
-        android:onClick="showOptionsMenu"
-        android:text="Options" />
-    
-    <Button
-        android:id="@+id/cascadeFaceFilesButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="left"
-        android:layout_row="6"
-        android:onClick="showCascadeFaceFilesMenu"
-        android:text="Cascade files face" />
-    
-    <Button
-        android:id="@+id/cascadeFileButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="right"
-        android:layout_row="6"
-        android:onClick="showCascadeEyesFilesMenu"
-        android:text="Cascade files eyes" />
-    
-    <Button
-        android:id="@+id/resolutionButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_column="3"
-        android:layout_columnSpan="2"
-        android:layout_gravity="fill_horizontal"
-        android:layout_row="6"
-        android:onClick="changeResolution"
-        android:text="Res" />
-    
-    <android.widget.VerticalSeekBar
-        android:id="@+id/minFaceSeekBar"
-        android:layout_height="80dp"
-        android:layout_column="3"
-        android:layout_gravity="right|fill_vertical"
-        android:layout_row="2" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView8"
+            android:layout_column="1"
+            android:layout_gravity="left"
+            android:layout_row="4"
+            android:text="tilesSize" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView3"
-        android:layout_column="3"
-        android:layout_gravity="right"
-        android:layout_row="1"
-        android:text="minFace" />
+        <TextView
+            android:id="@+id/clipLimitValueText"
+            android:layout_column="0"
+            android:layout_gravity="left"
+            android:layout_row="3"
+            android:text="0" />
 
-    <TextView
-        android:id="@+id/minFaceValueText"
-        android:layout_column="3"
-        android:layout_gravity="right"
-        android:layout_row="0"
-        android:text="0" />
-    
-    <android.widget.VerticalSeekBar
-        android:id="@+id/minEyeSeekBar"
-        android:layout_height="wrap_content"
-        android:layout_column="3"
-        android:layout_gravity="right|fill_vertical"
-        android:layout_row="5" />
+        <TextView
+            android:id="@+id/tilesSizeValueText"
+            android:layout_column="1"
+            android:layout_gravity="left"
+            android:layout_row="3"
+            android:text="0" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView5"
-        android:layout_column="3"
-        android:layout_gravity="right"
-        android:layout_row="4"
-        android:text="minEye" />
+        <Button
+            android:id="@+id/optionsButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="0"
+            android:layout_columnSpan="2"
+            android:layout_gravity="left"
+            android:layout_row="6"
+            android:onClick="showOptionsMenu"
+            android:text="Options" />
 
-    <TextView
-        android:id="@+id/minEyeValueText"
-        android:layout_column="3"
-        android:layout_gravity="right"
-        android:layout_row="3"
-        android:text="0" />
+        <Button
+            android:id="@+id/cascadeFaceFilesButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="left"
+            android:layout_row="6"
+            android:onClick="showCascadeFaceFilesMenu"
+            android:text="Cascade files face" />
 
-    <android.widget.VerticalSeekBar
-        android:id="@+id/maxFaceSeekBar"
-        android:layout_height="wrap_content"
-        android:layout_column="4"
-        android:layout_gravity="right|fill_vertical"
-        android:layout_row="2" />
+        <Button
+            android:id="@+id/cascadeFileButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="right"
+            android:layout_row="6"
+            android:onClick="showCascadeEyesFilesMenu"
+            android:text="Cascade files eyes" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView4"
-        android:layout_column="4"
-        android:layout_gravity="right"
-        android:layout_row="1"
-        android:text="maxFace" />
+        <Button
+            android:id="@+id/resolutionButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_column="3"
+            android:layout_columnSpan="2"
+            android:layout_gravity="fill_horizontal"
+            android:layout_row="6"
+            android:onClick="changeResolution"
+            android:text="Res" />
 
-    <TextView
-        android:id="@+id/maxFaceValueText"
-        android:layout_column="4"
-        android:layout_gravity="right"
-        android:layout_row="0"
-        android:text="0" />
-    
-    <android.widget.VerticalSeekBar
-        android:id="@+id/maxEyeSeekBar"
-        android:layout_height="wrap_content"
-        android:layout_column="4"
-        android:layout_gravity="right|fill_vertical"
-        android:layout_row="5" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/minFaceSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="3"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="2" />
 
-    <android.widget.VerticalTextView
-        android:id="@+id/textView6"
-        android:layout_column="4"
-        android:layout_gravity="right"
-        android:layout_row="4"
-        android:text="maxEye" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView3"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="1"
+            android:text="minFace" />
 
-    <TextView
-        android:id="@+id/maxEyeValueText"
-        android:layout_column="4"
-        android:layout_gravity="right"
-        android:layout_row="3"
-        android:text="0" />
+        <TextView
+            android:id="@+id/minFaceValueText"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="0"
+            android:text="0" />
 
-    <Button
-        android:id="@+id/rgbGrayButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="right|top"
-        android:layout_row="0"
-        android:layout_rowSpan="2"
-        android:text="RGB/Gray"
-        android:onClick="changeImageColorSpace" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/minEyeSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_column="3"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="5" />
 
-    <Button
-        android:id="@+id/detectionFlagButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="left|bottom"
-        android:layout_row="5"
-        android:text="Detection flag"
-        android:onClick="changeDetectionFlag" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView5"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="4"
+            android:text="minEye" />
 
-    <Button
-        android:id="@+id/isFaceTrackingButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="right|bottom"
-        android:layout_row="5"
-        android:onClick="changeIsFaceTracking"
-        android:text="Face tracking" />
+        <TextView
+            android:id="@+id/minEyeValueText"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="3"
+            android:text="0" />
 
-    <Button
-        android:id="@+id/startDetectionButton"
-        android:layout_height="36dp"
-        android:layout_column="2"
-        android:layout_gravity="center_horizontal|top"
-        android:layout_row="6"
-        android:onClick="startDrowsinessDetection"
-        android:text="Start detection" />
+        <android.widget.VerticalSeekBar
+            android:id="@+id/maxFaceSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="2" />
 
-    <Button
-        android:id="@+id/reset"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_column="2"
-        android:layout_gravity="right|center_vertical"
-        android:layout_row="1"
-        android:onClick="resetView"
-        android:text="RESET" />
+        <android.widget.VerticalTextView
+            android:id="@+id/textView4"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="1"
+            android:text="maxFace" />
 
-</GridLayout>
-	
+        <TextView
+            android:id="@+id/maxFaceValueText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="0"
+            android:text="0" />
+
+        <android.widget.VerticalSeekBar
+            android:id="@+id/maxEyeSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="5" />
+
+        <android.widget.VerticalTextView
+            android:id="@+id/textView6"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="4"
+            android:text="maxEye" />
+
+        <TextView
+            android:id="@+id/maxEyeValueText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="3"
+            android:text="0" />
+
+        <Button
+            android:id="@+id/rgbGrayButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="right|top"
+            android:layout_row="0"
+            android:layout_rowSpan="2"
+            android:onClick="changeImageColorSpace"
+            android:text="RGB/Gray" />
+
+        <Button
+            android:id="@+id/isFaceTrackingButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="left|top"
+            android:layout_row="0"
+            android:layout_rowSpan="2"
+            android:onClick="changeIsFaceTracking"
+            android:text="Face tracking" />
+        
+        <Button
+            android:id="@+id/detectionFlagButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="left|bottom"
+            android:layout_row="5"
+            android:onClick="changeDetectionFlag"
+            android:text="Detection flag" />
+
+        <Button
+            android:id="@+id/startDetectionButton"
+            android:layout_height="36dp"
+            android:layout_column="2"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_row="6"
+            android:onClick="startDrowsinessDetection"
+            android:text="Start detection" />
+
+        <Button
+            android:id="@+id/reset"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="right|center_vertical"
+            android:layout_row="1"
+            android:onClick="resetView"
+            android:text="RESET" />
+
+        <GridLayout
+            android:layout_column="2"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="2"
+            android:layout_rowSpan="4"
+            android:columnCount="8"
+            android:rowCount="3" >
+
+            <android.widget.VerticalSeekBar
+                android:id="@+id/minObjectSeekBar"
+                android:layout_height="wrap_content"
+                android:layout_column="7"
+                android:layout_gravity="left|fill_vertical"
+                android:layout_row="2" />
+
+            <android.widget.VerticalTextView
+                android:id="@+id/textView9"
+                android:layout_column="7"
+                android:layout_gravity="right"
+                android:layout_row="1"
+                android:text="minObject" />
+
+            <TextView
+                android:id="@+id/minObjectValueText"
+                android:layout_column="7"
+                android:layout_gravity="right"
+                android:layout_row="0"
+                android:text="0" />
+
+            <android.widget.VerticalSeekBar
+                android:id="@+id/maxObjectSeekBar"
+                android:layout_height="wrap_content"
+                android:layout_column="6"
+                android:layout_gravity="left|fill_vertical"
+                android:layout_row="2" />
+
+            <android.widget.VerticalTextView
+                android:id="@+id/textView10"
+                android:layout_column="6"
+                android:layout_gravity="right"
+                android:layout_row="1"
+                android:text="maxObject" />
+
+            <TextView
+                android:id="@+id/maxObjectValueText"
+                android:layout_column="6"
+                android:layout_gravity="right"
+                android:layout_row="0"
+                android:text="0" />
+        </GridLayout>
+
+    </GridLayout>
+
 </RelativeLayout>

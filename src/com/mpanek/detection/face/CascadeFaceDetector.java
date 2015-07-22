@@ -2,6 +2,7 @@ package com.mpanek.detection.face;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
@@ -9,6 +10,7 @@ import org.opencv.objdetect.Objdetect;
 import android.util.Log;
 
 import com.mpanek.detection.CascadeDetector;
+import com.mpanek.utils.VisualUtils;
 
 public class CascadeFaceDetector extends CascadeDetector{
 
@@ -33,6 +35,21 @@ public class CascadeFaceDetector extends CascadeDetector{
 
 	public void setLastFoundFace(Rect lastFoundFace) {
 		this.lastFoundFace = lastFoundFace;
+	}
+	
+	public Rect findFace(Mat imgToFind, Rect rect){
+		Mat imgToFindWithROI;
+		if (rect != null) {
+			imgToFindWithROI = new Mat(imgToFind, rect);
+		} else {
+			imgToFindWithROI = imgToFind;
+			rect = new Rect();
+		}
+		
+		Rect foundFace = findFace(imgToFindWithROI);
+		Rect foundFaceShifted = VisualUtils.shiftRectInRefToTOherRect(foundFace, rect);
+		lastFoundFace = foundFaceShifted;
+		return foundFaceShifted;
 	}
 
 	public Rect findFace(Mat imgToFind) {
