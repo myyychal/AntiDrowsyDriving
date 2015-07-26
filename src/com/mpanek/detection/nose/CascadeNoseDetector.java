@@ -10,6 +10,8 @@ import org.opencv.objdetect.Objdetect;
 import com.mpanek.detection.CascadeDetector;
 
 public class CascadeNoseDetector extends CascadeDetector{
+	
+	private Rect[] lastFoundNoses;
 
 	public CascadeNoseDetector() {
 		super();
@@ -24,7 +26,11 @@ public class CascadeNoseDetector extends CascadeDetector{
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}
 
-	public Rect[] findNose(Mat imgToFind, Rect face) {
+	public void setLastFoundNoses(Rect[] lastFoundNoses) {
+		this.lastFoundNoses = lastFoundNoses;
+	}
+
+	public Rect[] findNoses(Mat imgToFind, Rect face) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0) {
 			int heightGray = imgToFind.rows();
 			if (Math.round(heightGray * mRelativeMinObjectSize) > 0
@@ -61,6 +67,10 @@ public class CascadeNoseDetector extends CascadeDetector{
 			Point noseBr = new Point(noseArray[i].x + noseArray[i].width
 					+ face.x, noseArray[i].y + noseArray[i].height + face.y);
 			newNoseArray[i] = new Rect(noseTl, noseBr);
+		}
+		
+		if (newNoseArray != null && newNoseArray.length > 0){
+			lastFoundNoses = newNoseArray;
 		}
 		
 		return newNoseArray;

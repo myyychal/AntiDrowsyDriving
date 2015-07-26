@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -22,18 +21,15 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.Objdetect;
 import org.opencv.video.Video;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.Camera.Face;
-import android.hardware.Camera.FaceDetectionListener;
-import android.hardware.Camera;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -46,6 +42,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.RelativeLayout;
@@ -66,7 +63,6 @@ import com.mpanek.detection.mouth.CascadeMouthDetector;
 import com.mpanek.detection.nose.CascadeNoseDetector;
 import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.MathUtils;
-import com.mpanek.utils.VisualUtils;
 import com.mpanek.views.camera.CustomCameraView;
 
 public class MainActivity extends Activity implements CvCameraViewListener2 {
@@ -82,6 +78,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	TextView tileSizeValueText;
 	TextView minObjectValueText;
 	TextView maxObjectValueText;
+	TextView gaussValueText;
 
 	private VerticalSeekBar scaleFactorSeekBar;
 	private VerticalSeekBar minNeighsSeekBar;
@@ -94,6 +91,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private VerticalSeekBar clipLimitSeekBar;
 	private VerticalSeekBar tileSizeSeekBar;
 	private VerticalSeekBar gaussSeekBar;
+
+	private CheckBox gaussCheckbox;
 
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
 
@@ -114,16 +113,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private List<Byte> byteStatus;
 	private int iGFFTMax = 40;
 
-	private SubMenu mItemPreviewEqHistMenu;
-	private SubMenu mItemPreviewFindFaceMenu;
-	private SubMenu mItemPreviewFindEyesMenu;
-	private SubMenu mItemPreviewFindMouthMenu;
-	private SubMenu mItemPreviewOtherMenu;
-
 	private List<android.hardware.Camera.Size> mResolutionList;
 	private MenuItem[] mResolutionMenuItems;
 
-	private CustomCameraView mCustomCameraView;
+	private CameraBridgeViewBase mCustomCameraView;
 
 	SnapdragonFacialFeaturesDetector snapdragonFacialFeaturesDetector;
 	CascadeFaceDetector cascadeFaceDetector;
@@ -140,12 +133,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private static boolean isCurrentFrameRgb = true;
 
 	private static boolean isGuiHidden = false;
+	private static boolean isJavaCamera = true;
 
 	private static boolean isNoseChosen = false;
 	private static boolean isMouthChosen = false;
 
 	private int currentClipLimit = 4;
 	private int currentTileSize = 4;
+	private int gaussSize = 1;
 
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
@@ -155,7 +150,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				Log.i(TAG, "OpenCV loaded successfully");
 
 				System.loadLibrary("anti_drowsy_driving");
-
 				int faceResourceId = getResources().getIdentifier(
 						"lbpcascade_frontalface", "raw", getPackageName());
 				InputStream is = getResources().openRawResource(faceResourceId);
@@ -181,7 +175,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				cascadeNoseDetector.prepare(is, cascadeDir);
 
 				mCustomCameraView.enableView();
-				
+
 			}
 				break;
 			default: {
@@ -225,7 +219,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		setContentView(R.layout.main_surface_view);
 
-		mCustomCameraView = (CustomCameraView) findViewById(R.id.custom_camera_view);
+		mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.custom_camera_view);
 		mCustomCameraView.setCameraIndex(mCameraId);
 		mCustomCameraView.setVisibility(SurfaceView.VISIBLE);
 		mCustomCameraView.setCvCameraViewListener(this);
@@ -245,6 +239,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		colorSegmentationFaceDetector = new ColorSegmentationFaceDetector();
 
 		initVerticalSeekBars();
+
+		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
 	}
 
 	private void startOrientationListener() {
@@ -338,8 +334,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mGray = inputFrame.gray();
 
 		if (mCameraId == CameraBridgeViewBase.CAMERA_ID_FRONT) {
-//			Core.flip(mRgba, mRgba, 1);
-//			Core.flip(mGray, mGray, 1);
+			// Core.flip(mRgba, mRgba, 1);
+			// Core.flip(mGray, mGray, 1);
 		}
 
 		if (isCurrentFrameRgb) {
@@ -350,6 +346,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		final int viewMode = mViewMode;
 		final int eqHistMode = mEqHistMode;
+
+		if (gaussCheckbox.isChecked()
+				&& viewMode != ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION) {
+			Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
+					new Size(gaussSize, gaussSize), 0);
+		}
 
 		switch (eqHistMode) {
 		case ViewModesConstants.VIEW_MODE_EQ_NONE:
@@ -436,7 +438,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 					DrawingUtils.drawRects(eyes, currentlyUsedFrame,
 							DrawingConstants.EYES_RECT_COLOR);
 				}
-				Rect[] mouths = cascadeMouthDetector.findMouth(
+				Rect[] mouths = cascadeMouthDetector.findMouths(
 						currentlyUsedFrame, foundFace2);
 				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
 						DrawingConstants.MOUTH_RECT_COLOR);
@@ -453,7 +455,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			if (foundFace3 != null) {
 				DrawingUtils.drawRect(foundFace3, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
-				Rect[] noses = cascadeNoseDetector.findNose(currentlyUsedFrame,
+				Rect[] noses = cascadeNoseDetector.findNoses(currentlyUsedFrame,
 						foundFace3);
 				DrawingUtils.drawRects(noses, currentlyUsedFrame,
 						DrawingConstants.NOSE_RECT_COLOR);
@@ -557,15 +559,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			currentlyUsedFrame = mGray;
 			ApplyCLAHEExt(mGray.getNativeObjAddr(), (double) currentClipLimit,
 					(double) currentTileSize, (double) currentTileSize);
+			//Imgproc.GaussianBlur(mGray, mGray, new Size(5,5), 0);
 			Rect foundFaceInDetection;
-			if (isFaceTracking) {
-				Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
-				double boundingMultiplier = 0.1;
-				boundingBox.x += boundingMultiplier * mGray.width();
-				boundingBox.width -= 2 * boundingMultiplier * mGray.width();
-				foundFaceInDetection = cascadeFaceDetector.findFace(mGray,
-						boundingBox);
-			} else {
+			Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
+			double boundingMultiplier = 0.1;
+			boundingBox.x += boundingMultiplier * mGray.width();
+			boundingBox.width -= 2 * boundingMultiplier * mGray.width();
+			foundFaceInDetection = cascadeFaceDetector.findFace(mGray,
+					boundingBox);
+			if (foundFaceInDetection == null) {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFaceInDetection != null) {
@@ -575,13 +577,19 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						.height());
 				Rect[] eyes = cascadeEyesDetector.findEyes(mGray,
 						foundFaceForEyes);
+				if (eyes == null || eyes.length == 0){
+					eyes = cascadeEyesDetector.getLastFoundEyes();
+				}
 
 				Rect foundFaceForMouth = foundFaceInDetection.clone();
 				foundFaceForMouth.height /= 2;
 				foundFaceForMouth.y = foundFaceForMouth.y
 						+ foundFaceForMouth.height;
-				Rect mouths[] = cascadeMouthDetector.findMouth(mGray,
+				Rect mouths[] = cascadeMouthDetector.findMouths(mGray,
 						foundFaceForMouth);
+				if (mouths == null || mouths.length == 0){
+					mouths = cascadeMouthDetector.getLastFoundMouths();
+				}
 
 				DrawingUtils.drawRect(foundFaceInDetection, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
@@ -589,6 +597,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						DrawingConstants.EYES_RECT_COLOR);
 				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
 						DrawingConstants.MOUTH_RECT_COLOR);
+			} else {
+				Log.i(TAG, "No face detected");
 			}
 			break;
 
@@ -675,10 +685,29 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA;
 				break;
 			}
+		} else if (item.getGroupId() == 7) {
+			String toastMesage = new String();
+			mCustomCameraView.setVisibility(SurfaceView.GONE);
+			switch (item.getItemId()) {
+			case 0:
+				mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.custom_camera_view);
+				toastMesage = "Java Camera";
+				isJavaCamera = true;
+				break;
+			case 1:
+				mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.native_camera_view);
+				toastMesage = "Native Camera";
+				break;
+			}
+			mCustomCameraView.setVisibility(SurfaceView.VISIBLE);
+			mCustomCameraView.setCvCameraViewListener(this);
+			mCustomCameraView.enableView();
+			Toast toast = Toast.makeText(this, toastMesage, Toast.LENGTH_LONG);
+			toast.show();
 		}
 		return true;
 	}
-	
+
 	public void showOptionsMenu(View v) {
 		openOptionsMenu();
 	}
@@ -735,41 +764,51 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public void changeResolution(final View v) {
-		PopupMenu popup = new PopupMenu(this, v);
-		mResolutionList = mCustomCameraView.getResolutionList();
-		mResolutionMenuItems = new MenuItem[mResolutionList.size()];
+		if (mCustomCameraView instanceof CustomCameraView) {
+			final CustomCameraView mCustomCameraView = (CustomCameraView) this.mCustomCameraView;
+			PopupMenu popup = new PopupMenu(this, v);
+			mResolutionList = mCustomCameraView.getResolutionList();
+			mResolutionMenuItems = new MenuItem[mResolutionList.size()];
 
-		ListIterator<android.hardware.Camera.Size> resolutionItr = mResolutionList
-				.listIterator();
-		int idx = 0;
-		while (resolutionItr.hasNext()) {
-			android.hardware.Camera.Size element = resolutionItr.next();
-			mResolutionMenuItems[idx] = popup.getMenu().add(
-					2,
-					idx,
-					Menu.NONE,
-					Integer.valueOf(element.width).toString() + "x"
-							+ Integer.valueOf(element.height).toString());
-			idx++;
-		}
-
-		popup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-
-			@Override
-			public boolean onMenuItemClick(MenuItem item) {
-				int id = item.getItemId();
-				android.hardware.Camera.Size resolution = mResolutionList
-						.get(id);
-				mCustomCameraView.setResolution(resolution);
-				resolution = mCustomCameraView.getResolution();
-				String caption = Integer.valueOf(resolution.width).toString()
-						+ "x" + Integer.valueOf(resolution.height).toString();
-				Toast.makeText(getBaseContext(), caption, Toast.LENGTH_SHORT)
-						.show();
-				return false;
+			ListIterator<android.hardware.Camera.Size> resolutionItr = mResolutionList
+					.listIterator();
+			int idx = 0;
+			while (resolutionItr.hasNext()) {
+				android.hardware.Camera.Size element = resolutionItr.next();
+				mResolutionMenuItems[idx] = popup.getMenu().add(
+						2,
+						idx,
+						Menu.NONE,
+						Integer.valueOf(element.width).toString() + "x"
+								+ Integer.valueOf(element.height).toString());
+				idx++;
 			}
-		});
-		popup.show();
+
+			popup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					int id = item.getItemId();
+					android.hardware.Camera.Size resolution = mResolutionList
+							.get(id);
+					mCustomCameraView.setResolution(resolution);
+					resolution = mCustomCameraView.getResolution();
+					String caption = Integer.valueOf(resolution.width)
+							.toString()
+							+ "x"
+							+ Integer.valueOf(resolution.height).toString();
+					Toast.makeText(getBaseContext(), caption,
+							Toast.LENGTH_SHORT).show();
+					return false;
+				}
+			});
+			popup.show();
+		} else {
+			Toast.makeText(
+					getBaseContext(),
+					"This camera view does not support changing the resolution",
+					Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	public void changeImageColorSpace(View v) {
@@ -813,12 +852,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		Log.i(TAG, "called onCreateOptionsMenu");
-		mItemPreviewEqHistMenu = menu.addSubMenu("Equalize histogram");
-		mItemPreviewFindFaceMenu = menu.addSubMenu("Find face");
-		mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
-		mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
+		SubMenu mItemPreviewEqHistMenu = menu.addSubMenu("Equalize histogram");
+		SubMenu mItemPreviewFindFaceMenu = menu.addSubMenu("Find face");
+		SubMenu mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
+		SubMenu mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
 		menu.add(6, 0, Menu.NONE, "Find nose");
-		mItemPreviewOtherMenu = menu.addSubMenu("Other");
+		SubMenu mItemPreviewChooseCamera = menu.addSubMenu("Choose camera");
+		SubMenu mItemPreviewOtherMenu = menu.addSubMenu("Other");
 
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
 		mItemPreviewFindFaceMenu.add(1, 1, Menu.NONE, "Haar (Java)");
@@ -844,6 +884,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewOtherMenu.add(5, 3, Menu.NONE, "Find corner Harris (Cpp)");
 		mItemPreviewOtherMenu.add(5, 4, Menu.NONE, "Optical flow (Java)");
 		mItemPreviewOtherMenu.add(5, 5, Menu.NONE, "Optical flow (Cpp)");
+
+		mItemPreviewChooseCamera.add(7, 0, Menu.NONE, "Java");
+		mItemPreviewChooseCamera.add(7, 1, Menu.NONE, "Native");
 
 		return true;
 	}
@@ -880,15 +923,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			isGuiHidden = true;
 		}
 	}
-	
-	private void changeVisibiltyOfChildViews(View parentView, int visibiltyFlag){
-		if (parentView instanceof ViewGroup){
-			for (int i=0; i<((ViewGroup)parentView).getChildCount(); i++){
-				changeVisibiltyOfChildViews(((ViewGroup)parentView).getChildAt(i), visibiltyFlag);
+
+	private void changeVisibiltyOfChildViews(View parentView, int visibiltyFlag) {
+		if (parentView instanceof ViewGroup) {
+			for (int i = 0; i < ((ViewGroup) parentView).getChildCount(); i++) {
+				changeVisibiltyOfChildViews(
+						((ViewGroup) parentView).getChildAt(i), visibiltyFlag);
 			}
 		} else {
-			if (!(parentView instanceof CustomCameraView
-					|| parentView.getId() == R.id.showHideGui)) {
+			if (!(parentView instanceof CustomCameraView || parentView.getId() == R.id.showHideGui)) {
 				parentView.setVisibility(visibiltyFlag);
 			}
 		}
@@ -897,7 +940,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	public void chooseObjectToChangeItsSize(final View v) {
 		PopupMenu popup = new PopupMenu(this, v);
 		MenuInflater inflater = popup.getMenuInflater();
-		inflater.inflate(R.menu.detection_things, popup.getMenu());
+		inflater.inflate(R.menu.detection_things_menu, popup.getMenu());
 		popup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem menuitem) {
@@ -905,12 +948,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				if (menuItemTitle.equals("Mouth")) {
 					isMouthChosen = true;
 					isNoseChosen = false;
-					minObjectValueText.setText(String.valueOf(cascadeMouthDetector
-							.getmRelativeMinObjectSize()));
+					minObjectValueText.setText(String
+							.valueOf(cascadeMouthDetector
+									.getmRelativeMinObjectSize()));
 					minObjectSeekBar.setProgress((int) (cascadeMouthDetector
 							.getmRelativeMinObjectSize() * 100));
-					maxObjectValueText.setText(String.valueOf(cascadeMouthDetector
-							.getmRelativeMaxObjectSize()));
+					maxObjectValueText.setText(String
+							.valueOf(cascadeMouthDetector
+									.getmRelativeMaxObjectSize()));
 					maxObjectSeekBar.setProgress((int) (cascadeMouthDetector
 							.getmRelativeMaxObjectSize() * 100));
 					Button thisButton = (Button) v;
@@ -918,12 +963,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				} else if (menuItemTitle.equals("Nose")) {
 					isNoseChosen = true;
 					isMouthChosen = false;
-					minObjectValueText.setText(String.valueOf(cascadeNoseDetector
-							.getmRelativeMinObjectSize()));
+					minObjectValueText.setText(String
+							.valueOf(cascadeNoseDetector
+									.getmRelativeMinObjectSize()));
 					minObjectSeekBar.setProgress((int) (cascadeNoseDetector
 							.getmRelativeMinObjectSize() * 100));
-					maxObjectValueText.setText(String.valueOf(cascadeNoseDetector
-							.getmRelativeMaxObjectSize()));
+					maxObjectValueText.setText(String
+							.valueOf(cascadeNoseDetector
+									.getmRelativeMaxObjectSize()));
 					maxObjectSeekBar.setProgress((int) (cascadeNoseDetector
 							.getmRelativeMaxObjectSize() * 100));
 					Button thisButton = (Button) v;
@@ -1193,35 +1240,37 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			maxObjectSeekBar.setProgress((int) (cascadeNoseDetector
 					.getmRelativeMaxObjectSize() * 100));
 		}
-		maxObjectSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-			}
+		maxObjectSeekBar
+				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
 
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-			}
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
 
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
-				float currentValue = (float) ((float) progress / 100.0);
-				float minObject = Float.parseFloat(minObjectValueText.getText()
-						.toString());
-				if (currentValue < minObject) {
-					currentValue = minObject;
-				}
-				maxObjectValueText.setText(String.valueOf(currentValue));
-				if (isMouthChosen) {
-					cascadeMouthDetector.setSizeManuallyChanged(true);
-					cascadeMouthDetector
-							.setmRelativeMaxObjectSize(currentValue);
-				} else if (isNoseChosen) {
-					cascadeNoseDetector.setSizeManuallyChanged(true);
-					cascadeNoseDetector.setmRelativeMaxObjectSize(currentValue);
-				}
-			}
-		});
+					@Override
+					public void onProgressChanged(SeekBar seekBar,
+							int progress, boolean fromUser) {
+						float currentValue = (float) ((float) progress / 100.0);
+						float minObject = Float.parseFloat(minObjectValueText
+								.getText().toString());
+						if (currentValue < minObject) {
+							currentValue = minObject;
+						}
+						maxObjectValueText.setText(String.valueOf(currentValue));
+						if (isMouthChosen) {
+							cascadeMouthDetector.setSizeManuallyChanged(true);
+							cascadeMouthDetector
+									.setmRelativeMaxObjectSize(currentValue);
+						} else if (isNoseChosen) {
+							cascadeNoseDetector.setSizeManuallyChanged(true);
+							cascadeNoseDetector
+									.setmRelativeMaxObjectSize(currentValue);
+						}
+					}
+				});
 
 		clipLimitSeekBar = (VerticalSeekBar) findViewById(R.id.clipLimitSeekBar);
 		clipLimitValueText = (TextView) findViewById(R.id.clipLimitValueText);
@@ -1272,6 +1321,33 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						currentTileSize = currentValue;
 					}
 				});
+
+		gaussSeekBar = (VerticalSeekBar) findViewById(R.id.gaussSeekBar);
+		gaussValueText = (TextView) findViewById(R.id.gaussValueText);
+		gaussValueText.setText(String.valueOf(gaussSize));
+		gaussSeekBar
+				.setProgress((int) (gaussSize * 100 / DetectorConstants.MAX_GAUSS_SIZE));
+		gaussSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_GAUSS_SIZE - DetectorConstants.MIN_GAUSS_SIZE)) / 100)
+						+ DetectorConstants.MIN_GAUSS_SIZE;
+				if (currentValue % 2 == 0) {
+					currentValue += 1;
+				}
+				gaussValueText.setText(String.valueOf(currentValue));
+				gaussSize = currentValue;
+			}
+		});
 	}
 
 	public native void EqualizeHistogram(long matAddrGr);

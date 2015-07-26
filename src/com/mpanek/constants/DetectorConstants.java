@@ -10,9 +10,12 @@ public class DetectorConstants {
 	public static final int MAX_MIN_NEIGHBOURS = 20;
 	
 	public static final int MIN_CLIP_LIMIT = 0;
-	public static final int MAX_CLIP_LIMIT = 256;
+	public static final int MAX_CLIP_LIMIT = 24;
 	
 	public static final int MIN_TILE_SIZE = 1;
-	public static final int MAX_TILE_SIZE = 256;
+	public static final int MAX_TILE_SIZE = 24;
+	
+	public static final int MIN_GAUSS_SIZE = 1;
+	public static final int MAX_GAUSS_SIZE = 21;
 
 }

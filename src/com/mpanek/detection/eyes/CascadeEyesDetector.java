@@ -7,10 +7,14 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
 
+import android.util.Log;
+
 import com.mpanek.detection.CascadeDetector;
 
 public class CascadeEyesDetector extends CascadeDetector{
 
+	private Rect[] lastFoundEyes;
+	
 	public CascadeEyesDetector() {
 		super();
 		cascadeFileName = "haarcascade_eye_tree_eyeglasses.xml";
@@ -24,6 +28,13 @@ public class CascadeEyesDetector extends CascadeDetector{
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}
 	
+	public Rect[] getLastFoundEyes() {
+		if (lastFoundEyes != null){
+			Log.i(TAG, "Last found eyes size: " + String.valueOf(lastFoundEyes.length));
+		}
+		return lastFoundEyes;
+	}
+
 	public Rect[] findEyes(Mat imgToFind) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0) {
 			int heightGray = imgToFind.rows();
@@ -47,6 +58,10 @@ public class CascadeEyesDetector extends CascadeDetector{
 		}
 
 		Rect[] eyesArray = eyes.toArray();
+		
+		if (eyesArray != null && eyesArray.length > 0){
+			lastFoundEyes = eyesArray;
+		}
 
 		return eyesArray;
 	}
@@ -91,6 +106,10 @@ public class CascadeEyesDetector extends CascadeDetector{
 			Point eyeBr = new Point(eyesArray[i].x + eyesArray[i].width
 					+ face.x, eyesArray[i].y + eyesArray[i].height + face.y);
 			newEyesArray[i] = new Rect(eyeTl, eyeBr);
+		}
+		
+		if (newEyesArray != null && newEyesArray.length > 0){
+			lastFoundEyes = newEyesArray;
 		}
 		
 		return newEyesArray;

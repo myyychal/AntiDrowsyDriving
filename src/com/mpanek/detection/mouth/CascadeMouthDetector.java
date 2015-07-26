@@ -10,6 +10,8 @@ import org.opencv.objdetect.Objdetect;
 import com.mpanek.detection.CascadeDetector;
 
 public class CascadeMouthDetector extends CascadeDetector{
+	
+	private Rect[] lastFoundMouths;
 
 	public CascadeMouthDetector() {
 		super();
@@ -24,7 +26,11 @@ public class CascadeMouthDetector extends CascadeDetector{
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}
 
-	public Rect[] findMouth(Mat imgToFind, Rect face) {
+	public Rect[] getLastFoundMouths() {
+		return lastFoundMouths;
+	}
+
+	public Rect[] findMouths(Mat imgToFind, Rect face) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0) {
 			int heightGray = imgToFind.rows();
 			if (Math.round(heightGray * mRelativeMinObjectSize) > 0
@@ -61,6 +67,10 @@ public class CascadeMouthDetector extends CascadeDetector{
 			Point mouthBr = new Point(mouthArray[i].x + mouthArray[i].width
 					+ face.x, mouthArray[i].y + mouthArray[i].height + face.y);
 			newMouthArray[i] = new Rect(mouthTl, mouthBr);
+		}
+		
+		if (newMouthArray != null && newMouthArray.length > 0){
+			lastFoundMouths = newMouthArray;
 		}
 		
 		return newMouthArray;

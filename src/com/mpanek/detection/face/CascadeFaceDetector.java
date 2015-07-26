@@ -12,7 +12,7 @@ import android.util.Log;
 import com.mpanek.detection.CascadeDetector;
 import com.mpanek.utils.VisualUtils;
 
-public class CascadeFaceDetector extends CascadeDetector{
+public class CascadeFaceDetector extends CascadeDetector {
 
 	private Rect lastFoundFace;
 
@@ -33,11 +33,7 @@ public class CascadeFaceDetector extends CascadeDetector{
 		return lastFoundFace;
 	}
 
-	public void setLastFoundFace(Rect lastFoundFace) {
-		this.lastFoundFace = lastFoundFace;
-	}
-	
-	public Rect findFace(Mat imgToFind, Rect rect){
+	public Rect findFace(Mat imgToFind, Rect rect) {
 		Mat imgToFindWithROI;
 		if (rect != null) {
 			imgToFindWithROI = new Mat(imgToFind, rect);
@@ -45,10 +41,13 @@ public class CascadeFaceDetector extends CascadeDetector{
 			imgToFindWithROI = imgToFind;
 			rect = new Rect();
 		}
-		
+
 		Rect foundFace = findFace(imgToFindWithROI);
-		Rect foundFaceShifted = VisualUtils.shiftRectInRefToTOherRect(foundFace, rect);
-		lastFoundFace = foundFaceShifted;
+		Rect foundFaceShifted = VisualUtils.shiftRectInRefToTOherRect(
+				foundFace, rect);
+		if (foundFaceShifted != null) {
+			lastFoundFace = foundFaceShifted;
+		}
 		return foundFaceShifted;
 	}
 
@@ -70,9 +69,8 @@ public class CascadeFaceDetector extends CascadeDetector{
 
 		if (javaDetector != null) {
 			javaDetector.detectMultiScale(imgToFind, faces, scaleFactor,
-					minNeighbours,
-					detectionFlag,
-					new Size(mAbsoluteMinObjectSize, mAbsoluteMinObjectSize),
+					minNeighbours, detectionFlag, new Size(
+							mAbsoluteMinObjectSize, mAbsoluteMinObjectSize),
 					new Size(mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
 		}
 
@@ -81,8 +79,9 @@ public class CascadeFaceDetector extends CascadeDetector{
 		Log.i(TAG, "Parameters: detectionFlag " + String.valueOf(detectionFlag));
 
 		Rect mainFace = getMainFace(faces);
-		
-		lastFoundFace = mainFace;
+		if (mainFace != null) {
+			lastFoundFace = mainFace;
+		}
 
 		return mainFace;
 	}
