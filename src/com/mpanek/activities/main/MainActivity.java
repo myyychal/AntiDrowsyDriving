@@ -3,8 +3,10 @@ package com.mpanek.activities.main;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.ExecutionException;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -27,8 +29,13 @@ import org.opencv.objdetect.Objdetect;
 import org.opencv.video.Video;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -52,6 +59,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VerticalSeekBar;
 
+import com.mpanek.algorithms.ClaheAlgorithm;
 import com.mpanek.constants.DetectorConstants;
 import com.mpanek.constants.DrawingConstants;
 import com.mpanek.constants.ViewModesConstants;
@@ -59,8 +67,10 @@ import com.mpanek.detection.SnapdragonFacialFeaturesDetector;
 import com.mpanek.detection.eyes.CascadeEyesDetector;
 import com.mpanek.detection.face.CascadeFaceDetector;
 import com.mpanek.detection.face.ColorSegmentationFaceDetector;
+import com.mpanek.detection.main.DrowsinessDetector;
 import com.mpanek.detection.mouth.CascadeMouthDetector;
 import com.mpanek.detection.nose.CascadeNoseDetector;
+import com.mpanek.tasks.GaussBlurAsyncTask;
 import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.MathUtils;
 import com.mpanek.views.camera.CustomCameraView;
@@ -118,12 +128,16 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private CameraBridgeViewBase mCustomCameraView;
 
+	ClaheAlgorithm claheAlgorithm;
+
 	SnapdragonFacialFeaturesDetector snapdragonFacialFeaturesDetector;
 	CascadeFaceDetector cascadeFaceDetector;
 	CascadeEyesDetector cascadeEyesDetector;
 	CascadeMouthDetector cascadeMouthDetector;
 	CascadeNoseDetector cascadeNoseDetector;
 	ColorSegmentationFaceDetector colorSegmentationFaceDetector;
+
+	DrowsinessDetector drowsinessDetector;
 
 	OrientationEventListener orientationEventListener;
 	int deviceOrientation;
@@ -138,10 +152,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private static boolean isNoseChosen = false;
 	private static boolean isMouthChosen = false;
 
-	private int currentClipLimit = 4;
-	private int currentTileSize = 4;
 	private int gaussSize = 1;
 
+	GaussBlurAsyncTask gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
+	
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
 		public void onManagerConnected(int status) {
@@ -226,6 +240,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		startOrientationListener();
 
+		claheAlgorithm = new ClaheAlgorithm();
+
 		snapdragonFacialFeaturesDetector = new SnapdragonFacialFeaturesDetector(
 				((WindowManager) getSystemService(Context.WINDOW_SERVICE))
 						.getDefaultDisplay(),
@@ -238,6 +254,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		colorSegmentationFaceDetector = new ColorSegmentationFaceDetector();
 
+		drowsinessDetector = new DrowsinessDetector(cascadeFaceDetector,
+				cascadeEyesDetector, cascadeMouthDetector, cascadeNoseDetector,
+				claheAlgorithm);
+
 		initVerticalSeekBars();
 
 		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
@@ -249,11 +269,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			@Override
 			public void onOrientationChanged(int orientation) {
 				deviceOrientation = orientation;
-				Log.i(TAG, "Device orientation: " + deviceOrientation);
-				Log.i(TAG,
-						"Present orientation: "
-								+ (90 * Math.round(deviceOrientation / 90))
-								% 360);
 			}
 		};
 
@@ -349,8 +364,27 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		if (gaussCheckbox.isChecked()
 				&& viewMode != ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION) {
-			Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
-					new Size(gaussSize, gaussSize), 0);
+//			Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
+//					new Size(gaussSize, gaussSize), 0);
+			AsyncTask.Status gaussBlurSyncTaskStatus = gaussBlurAsyncTask.getStatus();
+			if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.FINISHED)){
+				Log.i(TAG, "gaussBlurAsyncTask is finished");
+				try {
+					currentlyUsedFrame = gaussBlurAsyncTask.get();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+				gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
+				gaussBlurAsyncTask.execute();
+			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.PENDING)){
+				Log.i(TAG, "gaussBlurAsyncTask is pending");
+				gaussBlurAsyncTask.setFrame(currentlyUsedFrame);
+				gaussBlurAsyncTask.execute();
+			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.RUNNING)){
+				Log.i(TAG, "gaussBlurAsyncTask is running");
+			}
 		}
 
 		switch (eqHistMode) {
@@ -362,9 +396,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			break;
 
 		case ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP:
-			ApplyCLAHEExt(currentlyUsedFrame.getNativeObjAddr(),
-					(double) currentClipLimit, (double) currentTileSize,
-					(double) currentTileSize);
+			claheAlgorithm.process(currentlyUsedFrame);
 			break;
 		}
 
@@ -455,8 +487,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			if (foundFace3 != null) {
 				DrawingUtils.drawRect(foundFace3, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
-				Rect[] noses = cascadeNoseDetector.findNoses(currentlyUsedFrame,
-						foundFace3);
+				Rect[] noses = cascadeNoseDetector.findNoses(
+						currentlyUsedFrame, foundFace3);
 				DrawingUtils.drawRects(noses, currentlyUsedFrame,
 						DrawingConstants.NOSE_RECT_COLOR);
 			}
@@ -556,50 +588,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			break;
 
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
-			currentlyUsedFrame = mGray;
-			ApplyCLAHEExt(mGray.getNativeObjAddr(), (double) currentClipLimit,
-					(double) currentTileSize, (double) currentTileSize);
-			//Imgproc.GaussianBlur(mGray, mGray, new Size(5,5), 0);
-			Rect foundFaceInDetection;
-			Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
-			double boundingMultiplier = 0.1;
-			boundingBox.x += boundingMultiplier * mGray.width();
-			boundingBox.width -= 2 * boundingMultiplier * mGray.width();
-			foundFaceInDetection = cascadeFaceDetector.findFace(mGray,
-					boundingBox);
-			if (foundFaceInDetection == null) {
-				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
-			}
-			if (foundFaceInDetection != null) {
-				Rect foundFaceForEyes = foundFaceInDetection.clone();
-				foundFaceForEyes.height /= 2;
-				foundFaceForEyes.y = (int) (foundFaceForEyes.y + 0.1 * mGray
-						.height());
-				Rect[] eyes = cascadeEyesDetector.findEyes(mGray,
-						foundFaceForEyes);
-				if (eyes == null || eyes.length == 0){
-					eyes = cascadeEyesDetector.getLastFoundEyes();
-				}
-
-				Rect foundFaceForMouth = foundFaceInDetection.clone();
-				foundFaceForMouth.height /= 2;
-				foundFaceForMouth.y = foundFaceForMouth.y
-						+ foundFaceForMouth.height;
-				Rect mouths[] = cascadeMouthDetector.findMouths(mGray,
-						foundFaceForMouth);
-				if (mouths == null || mouths.length == 0){
-					mouths = cascadeMouthDetector.getLastFoundMouths();
-				}
-
-				DrawingUtils.drawRect(foundFaceInDetection, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
-				DrawingUtils.drawRects(eyes, currentlyUsedFrame,
-						DrawingConstants.EYES_RECT_COLOR);
-				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
-						DrawingConstants.MOUTH_RECT_COLOR);
-			} else {
-				Log.i(TAG, "No face detected");
-			}
+			currentlyUsedFrame = drowsinessDetector.processDetection(mGray,
+					mRgba);
 			break;
 
 		}
@@ -897,14 +887,26 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public void startDrowsinessDetection(View v) {
-		switch (mViewMode) {
-		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
-			mViewMode = ViewModesConstants.VIEW_MODE_NONE;
-			break;
-		case ViewModesConstants.VIEW_MODE_NONE:
-			mViewMode = ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION;
-			break;
-		}
+		AlertDialog dialog;
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Select algorithm elements");
+		CharSequence[] items = drowsinessDetector.getItems();
+		boolean[] checkedItems = new boolean[items.length];
+		Arrays.fill(checkedItems, true);
+		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+				drowsinessDetector.setDetectionElementsById(indexSelected, isChecked);
+			}
+		});
+		builder.setPositiveButton("Ok", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				mViewMode = ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION;
+			}
+		});
+		dialog = builder.create();
+		dialog.show();
 	}
 
 	public void showHideGui(View v) {
@@ -1216,14 +1218,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 					@Override
 					public void onStartTrackingTouch(SeekBar arg0) {
-						// TODO Auto-generated method stub
-
 					}
 
 					@Override
 					public void onStopTrackingTouch(SeekBar arg0) {
-						// TODO Auto-generated method stub
-
 					}
 				});
 
@@ -1274,9 +1272,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		clipLimitSeekBar = (VerticalSeekBar) findViewById(R.id.clipLimitSeekBar);
 		clipLimitValueText = (TextView) findViewById(R.id.clipLimitValueText);
-		clipLimitValueText.setText(String.valueOf(currentClipLimit));
+		clipLimitValueText.setText(String.valueOf(claheAlgorithm
+				.getCurrentClipLimit()));
 		clipLimitSeekBar
-				.setProgress((int) (currentClipLimit * 100 / DetectorConstants.MAX_CLIP_LIMIT));
+				.setProgress((int) (claheAlgorithm.getCurrentClipLimit() * 100 / DetectorConstants.MAX_CLIP_LIMIT));
 		clipLimitSeekBar
 				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 					@Override
@@ -1293,15 +1292,16 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						int currentValue = ((progress * (DetectorConstants.MAX_CLIP_LIMIT - DetectorConstants.MIN_CLIP_LIMIT)) / 100)
 								+ DetectorConstants.MIN_CLIP_LIMIT;
 						clipLimitValueText.setText(String.valueOf(currentValue));
-						currentClipLimit = currentValue;
+						claheAlgorithm.setCurrentClipLimit(currentValue);
 					}
 				});
 
 		tileSizeSeekBar = (VerticalSeekBar) findViewById(R.id.tilesSizeSeekBar);
 		tileSizeValueText = (TextView) findViewById(R.id.tilesSizeValueText);
-		tileSizeValueText.setText(String.valueOf(currentTileSize));
+		tileSizeValueText.setText(String.valueOf(claheAlgorithm
+				.getCurrentTileSize()));
 		tileSizeSeekBar
-				.setProgress((int) (currentTileSize * 100 / DetectorConstants.MAX_TILE_SIZE));
+				.setProgress((int) (claheAlgorithm.getCurrentTileSize() * 100 / DetectorConstants.MAX_TILE_SIZE));
 		tileSizeSeekBar
 				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 					@Override
@@ -1318,7 +1318,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						int currentValue = ((progress * (DetectorConstants.MAX_TILE_SIZE - DetectorConstants.MIN_TILE_SIZE)) / 100)
 								+ DetectorConstants.MIN_TILE_SIZE;
 						tileSizeValueText.setText(String.valueOf(currentValue));
-						currentTileSize = currentValue;
+						claheAlgorithm.setCurrentTileSize(currentValue);
 					}
 				});
 

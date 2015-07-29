@@ -26,8 +26,8 @@ public class CascadeNoseDetector extends CascadeDetector{
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}
 
-	public void setLastFoundNoses(Rect[] lastFoundNoses) {
-		this.lastFoundNoses = lastFoundNoses;
+	public Rect[] getLastFoundNoses() {
+		return lastFoundNoses;
 	}
 
 	public Rect[] findNoses(Mat imgToFind, Rect face) {

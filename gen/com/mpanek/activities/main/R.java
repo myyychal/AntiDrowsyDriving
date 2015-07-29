@@ -75,6 +75,10 @@ containing a value of this type.
         public static final int isFaceTrackingButton=0x7f050023;
         public static final int item1=0x7f050046;
         public static final int item2=0x7f050047;
+        public static final int item3=0x7f050048;
+        public static final int item4=0x7f050049;
+        public static final int item5=0x7f05004a;
+        public static final int item6=0x7f05004b;
         public static final int mainLayout=0x7f050003;
         public static final int maxEyeSeekBar=0x7f05001f;
         public static final int maxEyeValueText=0x7f050021;
@@ -120,7 +124,8 @@ containing a value of this type.
         public static final int cascade_detection_flag_menu=0x7f070000;
         public static final int cascade_eyes_files_menu=0x7f070001;
         public static final int cascade_face_files_menu=0x7f070002;
-        public static final int detection_things_menu=0x7f070003;
+        public static final int detection_elements_menu=0x7f070003;
+        public static final int detection_things_menu=0x7f070004;
     }
     public static final class raw {
         public static final int haarcascade_eye=0x7f040000;
