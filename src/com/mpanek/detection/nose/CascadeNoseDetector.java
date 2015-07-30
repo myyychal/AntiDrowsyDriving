@@ -32,7 +32,7 @@ public class CascadeNoseDetector extends CascadeDetector{
 
 	public Rect[] findNoses(Mat imgToFind, Rect face) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0) {
-			int heightGray = imgToFind.rows();
+			int heightGray = face.height;
 			if (Math.round(heightGray * mRelativeMinObjectSize) > 0
 					&& Math.round(heightGray * mRelativeMaxObjectSize) > 0) {
 				mAbsoluteMinObjectSize = Math.round(heightGray
@@ -46,6 +46,9 @@ public class CascadeNoseDetector extends CascadeDetector{
 
 		Mat imgToFindWithROI;
 		if (face != null) {
+			face.height /= 2;
+			face.y = face.y
+					+ face.height;
 			imgToFindWithROI = new Mat(imgToFind, face);
 		} else {
 			imgToFindWithROI = imgToFind;

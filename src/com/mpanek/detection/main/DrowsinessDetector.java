@@ -82,9 +82,6 @@ public class DrowsinessDetector {
 			Rect[] noses = null;
 			if (isDetectEyes) {
 				Rect foundFaceForEyes = foundFaceInDetection.clone();
-				foundFaceForEyes.height /= 2;
-				foundFaceForEyes.y = (int) (foundFaceForEyes.y + 0.1 * mGray
-						.height());
 				eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes);
 				if (eyes == null || eyes.length == 0) {
 					eyes = cascadeEyesDetector.getLastFoundEyes();
@@ -92,9 +89,6 @@ public class DrowsinessDetector {
 			}
 			if (isDetectMouth) {
 				Rect foundFaceForMouth = foundFaceInDetection.clone();
-				foundFaceForMouth.height /= 2;
-				foundFaceForMouth.y = foundFaceForMouth.y
-						+ foundFaceForMouth.height;
 				mouths = cascadeMouthDetector.findMouths(mGray,
 						foundFaceForMouth);
 				if (mouths == null || mouths.length == 0) {
@@ -103,9 +97,6 @@ public class DrowsinessDetector {
 			}
 			if (isDetectNose) {
 				Rect foundFaceForNose = foundFaceInDetection.clone();
-				foundFaceForNose.height /= 2;
-				foundFaceForNose.y = foundFaceForNose.y
-						+ foundFaceForNose.height;
 				noses = cascadeNoseDetector.findNoses(mGray, foundFaceForNose);
 				if (noses == null || noses.length == 0) {
 					noses = cascadeNoseDetector.getLastFoundNoses();
@@ -196,9 +187,18 @@ public class DrowsinessDetector {
 			isDetectNose = isChosen;
 			break;
 		case 5:
-			isDetectNose = isChosen;
+			isDetectMouth = isChosen;
 			break;
 		}
+	}
+	
+	public void setAllDetectionElements(boolean value){
+		isEqualizeHistogram = value;
+		isGaussianBlur = value;
+		isDetectFace = value;
+		isDetectEyes = value;
+		isDetectNose = value;
+		isDetectMouth = value;
 	}
 
 	public boolean isEqualizeHistogram() {

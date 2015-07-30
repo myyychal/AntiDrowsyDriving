@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 
 	Mat frame;
+	Rect foundFace;
 	CascadeFaceDetector cascadeFaceDetector;
 
 	public FaceDetectionAsyncTask(Mat frame,
@@ -33,6 +34,7 @@ public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 			if (foundFaceInDetection == null) {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
+			foundFace = foundFaceInDetection;
 			return foundFaceInDetection;
 		} else
 			return null;
@@ -46,4 +48,8 @@ public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 		this.cascadeFaceDetector = cascadeFaceDetector;
 	}
 
+	public Rect getFoundFace() {
+		return foundFace;
+	}
+	
 }

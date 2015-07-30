@@ -450,6 +450,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			if (foundFaceFromAsyncTask != null) {
 				DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame,
 						DrawingConstants.FACE_RECT_COLOR);
+			} else if (faceDetectionAsyncTask != null){
+				foundFaceFromAsyncTask = faceDetectionAsyncTask.getFoundFace();
+				DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame,
+						DrawingConstants.FACE_RECT_COLOR);
 			}
 			break;
 
@@ -927,6 +931,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		CharSequence[] items = drowsinessDetector.getItems();
 		boolean[] checkedItems = new boolean[items.length];
 		Arrays.fill(checkedItems, true);
+		drowsinessDetector.setAllDetectionElements(true);
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {

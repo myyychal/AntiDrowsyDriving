@@ -21,9 +21,9 @@ public class CascadeEyesDetector extends CascadeDetector{
 		TAG = "AntiDrowsyDriving::CascadeEyesDetector";
 		this.scaleFactor = 1.1f;
 		this.minNeighbours = 2;
-		this.mRelativeMinObjectSize = 0.1f;
+		this.mRelativeMinObjectSize = 0.15f;
 		this.mAbsoluteMinObjectSize = 0;
-		this.mRelativeMaxObjectSize = 0.5f;
+		this.mRelativeMaxObjectSize = 0.3f;
 		this.mAbsoluteMaxObjectSize = 0;
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}
@@ -69,7 +69,7 @@ public class CascadeEyesDetector extends CascadeDetector{
 	public Rect[] findEyes(Mat imgToFind, Rect face) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0
 				|| isSizeManuallyChanged) {
-			int heightGray = imgToFind.rows();
+			int heightGray = face.height;
 			if (Math.round(heightGray * mRelativeMinObjectSize) > 0
 					&& Math.round(heightGray * mRelativeMaxObjectSize) > 0) {
 				mAbsoluteMinObjectSize = Math.round(heightGray
@@ -84,6 +84,9 @@ public class CascadeEyesDetector extends CascadeDetector{
 
 		Mat imgToFindWithROI;
 		if (face != null) {
+			face.height /= 2;
+			face.y = (int) (face.y + 0.1 * imgToFind
+					.height());
 			imgToFindWithROI = new Mat(imgToFind, face);
 		} else {
 			imgToFindWithROI = imgToFind;

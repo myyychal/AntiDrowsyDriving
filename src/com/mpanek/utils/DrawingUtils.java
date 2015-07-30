@@ -13,7 +13,9 @@ public class DrawingUtils {
 	}
 
 	public static void drawRect(Rect rect, Mat imgToDraw, Scalar color) {
-		Core.rectangle(imgToDraw, rect.tl(), rect.br(), color, 3);
+		if (rect != null) {
+			Core.rectangle(imgToDraw, rect.tl(), rect.br(), color, 3);
+		}
 	}
 
 	public static void drawRects(Rect[] rects, Mat imgToDraw, Scalar color,
