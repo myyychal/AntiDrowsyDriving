@@ -70,6 +70,7 @@ import com.mpanek.detection.face.ColorSegmentationFaceDetector;
 import com.mpanek.detection.main.DrowsinessDetector;
 import com.mpanek.detection.mouth.CascadeMouthDetector;
 import com.mpanek.detection.nose.CascadeNoseDetector;
+import com.mpanek.tasks.FaceDetectionAsyncTask;
 import com.mpanek.tasks.GaussBlurAsyncTask;
 import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.MathUtils;
@@ -155,6 +156,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private int gaussSize = 1;
 
 	GaussBlurAsyncTask gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
+	FaceDetectionAsyncTask faceDetectionAsyncTask = new FaceDetectionAsyncTask(currentlyUsedFrame, cascadeFaceDetector);
 	
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
@@ -422,6 +424,34 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			FindFace(currentlyUsedFrame.getNativeObjAddr(),
 					currentlyUsedFrame.getNativeObjAddr());
 			break;
+			
+		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA_ASYNC_TASK:
+			Rect foundFaceFromAsyncTask = null;
+			AsyncTask.Status faceDetectSyncTaskStatus = faceDetectionAsyncTask.getStatus();
+			if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.FINISHED)){
+				Log.i(TAG, "faceDetectAsyncTask is finished");
+				try {
+					foundFaceFromAsyncTask = faceDetectionAsyncTask.get();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+				faceDetectionAsyncTask = new FaceDetectionAsyncTask(currentlyUsedFrame, cascadeFaceDetector);
+				faceDetectionAsyncTask.execute();
+			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.PENDING)){
+				Log.i(TAG, "faceDetectAsyncTask is pending");
+				faceDetectionAsyncTask.setFrame(currentlyUsedFrame);
+				faceDetectionAsyncTask.setCascadeFaceDetector(cascadeFaceDetector);
+				faceDetectionAsyncTask.execute();
+			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.RUNNING)){
+				Log.i(TAG, "faceDetectAsyncTask is running");
+			}
+			if (foundFaceFromAsyncTask != null) {
+				DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame,
+						DrawingConstants.FACE_RECT_COLOR);
+			}
+			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA:
 			currentlyUsedFrame = colorSegmentationFaceDetector
@@ -610,9 +640,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP;
 				break;
 			case 3:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA;
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA_ASYNC_TASK;
 				break;
 			case 4:
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA;
+				break;
+			case 5:
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP;
 				break;
 			}
@@ -853,9 +886,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
 		mItemPreviewFindFaceMenu.add(1, 1, Menu.NONE, "Haar (Java)");
 		mItemPreviewFindFaceMenu.add(1, 2, Menu.NONE, "Haar (Cpp)");
-		mItemPreviewFindFaceMenu.add(1, 3, Menu.NONE,
-				"Color segmentation (Java)");
+		mItemPreviewFindFaceMenu.add(1, 3, Menu.NONE, "Haar (Java AsyncTask)");
 		mItemPreviewFindFaceMenu.add(1, 4, Menu.NONE,
+				"Color segmentation (Java)");
+		mItemPreviewFindFaceMenu.add(1, 5, Menu.NONE,
 				"Color segmentation (Cpp)");
 
 		mItemPreviewFindEyesMenu.add(2, 0, Menu.NONE, "Java");

@@ -11,6 +11,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_FIND_EYES_CASCADE_JAVA = 9;
 	public static final int VIEW_MODE_FIND_FACE_CASCADE_CPP = 8;
 	public static final int VIEW_MODE_FIND_FACE_CASCADE_JAVA = 7;
+	public static final int VIEW_MODE_FIND_FACE_CASCADE_JAVA_ASYNC_TASK = 22;
 	public static final int VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP = 13;
 	public static final int VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA = 12;
 	public static final int VIEW_MODE_FIND_FACE_SNAPDRAGON = 6;
