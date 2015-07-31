@@ -29,16 +29,14 @@ public class SnapdragonFacialFeaturesDetector {
 		faceProc = FacialProcessing.getInstance();
 	}
 
-	public SnapdragonFacialFeaturesDetector(Display display, String tAG,
-			int mCameraId) {
+	public SnapdragonFacialFeaturesDetector(Display display, String tAG, int mCameraId) {
 		super();
 		this.display = display;
 		TAG = tAG;
 		this.mCameraId = mCameraId;
 	}
 
-	public SnapdragonFacialFeaturesDetector(FacialProcessing faceProc,
-			FaceData[] faceArray, Display display, int mCameraId, String tag) {
+	public SnapdragonFacialFeaturesDetector(FacialProcessing faceProc, FaceData[] faceArray, Display display, int mCameraId, String tag) {
 		super();
 		this.faceProc = faceProc;
 		this.faceArray = faceArray;
@@ -114,7 +112,7 @@ public class SnapdragonFacialFeaturesDetector {
 
 		Mat newMat = new Mat(img.height(), img.width(), CvType.CV_8UC4);
 
-		if (img.channels() >= 3){
+		if (img.channels() >= 3) {
 			Imgproc.cvtColor(img, newMat, Imgproc.COLOR_RGB2YUV_I420);
 		} else {
 			Imgproc.cvtColor(img, newMat, Imgproc.COLOR_GRAY2RGB);
@@ -136,17 +134,13 @@ public class SnapdragonFacialFeaturesDetector {
 		Log.i(TAG, "DIMENSIONS: previewHeight - " + String.valueOf(height));
 
 		// Landscape mode - front camera
-		if (orientation == Configuration.ORIENTATION_LANDSCAPE
-				&& mCameraId == CameraBridgeViewBase.CAMERA_ID_FRONT) {
-			isFaceDetected = faceProc.setFrame(buff, width, height, false,
-					angleEnum);
+		if (orientation == Configuration.ORIENTATION_LANDSCAPE && mCameraId == CameraBridgeViewBase.CAMERA_ID_FRONT) {
+			isFaceDetected = faceProc.setFrame(buff, width, height, false, angleEnum);
 			Log.i(TAG, "DetectFace: landscape front, angleNum: " + angleEnum);
 		}
 		// Landscape mode - back camera
-		else if (orientation == Configuration.ORIENTATION_LANDSCAPE
-				&& mCameraId == CameraBridgeViewBase.CAMERA_ID_BACK) {
-			isFaceDetected = faceProc.setFrame(buff, width, height, false,
-					angleEnum);
+		else if (orientation == Configuration.ORIENTATION_LANDSCAPE && mCameraId == CameraBridgeViewBase.CAMERA_ID_BACK) {
+			isFaceDetected = faceProc.setFrame(buff, width, height, false, angleEnum);
 			Log.i(TAG, "DetectFace: landscape back, angleNum: " + angleEnum);
 		}
 
@@ -172,20 +166,13 @@ public class SnapdragonFacialFeaturesDetector {
 			mouth.y = faceArray[0].mouth.y;
 			Core.circle(img, mouth, 5, new Scalar(255, 255, 255));
 
-			Log.i(TAG,
-					"leftEye: "
-							+ String.valueOf(faceArray[0].leftEye.toString()));
-			Log.i(TAG,
-					"rightEye: "
-							+ String.valueOf(faceArray[0].rightEye.toString()));
-			Log.i(TAG,
-					"mouth: " + String.valueOf(faceArray[0].mouth.toString()));
+			Log.i(TAG, "leftEye: " + String.valueOf(faceArray[0].leftEye.toString()));
+			Log.i(TAG, "rightEye: " + String.valueOf(faceArray[0].rightEye.toString()));
+			Log.i(TAG, "mouth: " + String.valueOf(faceArray[0].mouth.toString()));
 			Log.i(TAG, "face: " + String.valueOf(faceArray[0].rect.toString()));
 		} else {
-			Core.putText(img, "No face",
-					new Point(newMat.width() / 2, newMat.height() / 2),
-					Core.FONT_HERSHEY_COMPLEX_SMALL, 0.8, new Scalar(200, 200,
-							250));
+			Core.putText(img, "No face", new Point(newMat.width() / 2, newMat.height() / 2), Core.FONT_HERSHEY_COMPLEX_SMALL, 0.8, new Scalar(200,
+					200, 250));
 		}
 
 		return img;

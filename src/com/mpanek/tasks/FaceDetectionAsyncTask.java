@@ -13,8 +13,7 @@ public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 	Rect foundFace;
 	CascadeFaceDetector cascadeFaceDetector;
 
-	public FaceDetectionAsyncTask(Mat frame,
-			CascadeFaceDetector cascadeFaceDetector) {
+	public FaceDetectionAsyncTask(Mat frame, CascadeFaceDetector cascadeFaceDetector) {
 		super();
 		this.frame = frame;
 		this.cascadeFaceDetector = cascadeFaceDetector;
@@ -23,14 +22,12 @@ public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 	@Override
 	protected Rect doInBackground(Void... params) {
 		if (frame != null) {
-			Rect foundFaceInDetection = new Rect(0, 0, frame.width(),
-					frame.height());
+			Rect foundFaceInDetection = new Rect(0, 0, frame.width(), frame.height());
 			Rect boundingBox = new Rect(0, 0, frame.width(), frame.height());
 			double boundingMultiplier = 0.1;
 			boundingBox.x += boundingMultiplier * frame.width();
 			boundingBox.width -= 2 * boundingMultiplier * frame.width();
-			foundFaceInDetection = cascadeFaceDetector.findFace(frame,
-					boundingBox);
+			foundFaceInDetection = cascadeFaceDetector.findFace(frame, boundingBox);
 			if (foundFaceInDetection == null) {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
@@ -51,5 +48,5 @@ public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
 	public Rect getFoundFace() {
 		return foundFace;
 	}
-	
+
 }

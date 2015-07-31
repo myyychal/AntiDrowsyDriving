@@ -12,10 +12,8 @@ public class VerticalTextView extends TextView {
 	public VerticalTextView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		final int gravity = getGravity();
-		if (Gravity.isVertical(gravity)
-				&& (gravity & Gravity.VERTICAL_GRAVITY_MASK) == Gravity.BOTTOM) {
-			setGravity((gravity & Gravity.HORIZONTAL_GRAVITY_MASK)
-					| Gravity.TOP);
+		if (Gravity.isVertical(gravity) && (gravity & Gravity.VERTICAL_GRAVITY_MASK) == Gravity.BOTTOM) {
+			setGravity((gravity & Gravity.HORIZONTAL_GRAVITY_MASK) | Gravity.TOP);
 			topDown = false;
 		} else
 			topDown = true;

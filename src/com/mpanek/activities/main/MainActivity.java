@@ -116,8 +116,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private Mat matOpFlowPrev, matOpFlowThis;
 	private MatOfPoint MOPcorners;
-	private MatOfPoint2f mMOP2f1, mMOP2f2, mMOP2fptsPrev, mMOP2fptsThis,
-			mMOP2fptsSafe;
+	private MatOfPoint2f mMOP2f1, mMOP2f2, mMOP2fptsPrev, mMOP2fptsThis, mMOP2fptsSafe;
 	private MatOfByte mMOBStatus;
 	private MatOfFloat mMOFerr;
 	private List<Point> cornersThis, cornersPrev;
@@ -127,7 +126,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private List<android.hardware.Camera.Size> mResolutionList;
 	private MenuItem[] mResolutionMenuItems;
 
-	private CameraBridgeViewBase mCustomCameraView;
+	private CustomCameraView mCustomCameraView;
 
 	ClaheAlgorithm claheAlgorithm;
 
@@ -157,7 +156,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	GaussBlurAsyncTask gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
 	FaceDetectionAsyncTask faceDetectionAsyncTask = new FaceDetectionAsyncTask(currentlyUsedFrame, cascadeFaceDetector);
-	
+
 	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 		@Override
 		public void onManagerConnected(int status) {
@@ -166,32 +165,26 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				Log.i(TAG, "OpenCV loaded successfully");
 
 				System.loadLibrary("anti_drowsy_driving");
-				int faceResourceId = getResources().getIdentifier(
-						"lbpcascade_frontalface", "raw", getPackageName());
+				int faceResourceId = getResources().getIdentifier("lbpcascade_frontalface", "raw", getPackageName());
 				InputStream is = getResources().openRawResource(faceResourceId);
 				File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
 				File faceFile = cascadeFaceDetector.prepare(is, cascadeDir);
 				PrepareFindFace(faceFile.getAbsolutePath());
 
-				int eyesResourceId = getResources().getIdentifier(
-						"haarcascade_eye_tree_eyeglasses", "raw",
-						getPackageName());
+				int eyesResourceId = getResources().getIdentifier("haarcascade_righteye_2splits", "raw", getPackageName());
 				is = getResources().openRawResource(eyesResourceId);
 				File eyesFile = cascadeEyesDetector.prepare(is, cascadeDir);
 				PrepareFindEyes(eyesFile.getAbsolutePath());
 
-				int mouthResourceId = getResources().getIdentifier(
-						"haarcascade_mcs_mouth", "raw", getPackageName());
+				int mouthResourceId = getResources().getIdentifier("haarcascade_mcs_mouth", "raw", getPackageName());
 				is = getResources().openRawResource(mouthResourceId);
 				cascadeMouthDetector.prepare(is, cascadeDir);
 
-				int noseResourceId = getResources().getIdentifier(
-						"haarcascade_mcs_nose", "raw", getPackageName());
+				int noseResourceId = getResources().getIdentifier("haarcascade_mcs_nose", "raw", getPackageName());
 				is = getResources().openRawResource(noseResourceId);
 				cascadeNoseDetector.prepare(is, cascadeDir);
 
 				mCustomCameraView.enableView();
-
 			}
 				break;
 			default: {
@@ -235,19 +228,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		setContentView(R.layout.main_surface_view);
 
-		mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.custom_camera_view);
+		mCustomCameraView = (CustomCameraView) findViewById(R.id.custom_camera_view);
 		mCustomCameraView.setCameraIndex(mCameraId);
 		mCustomCameraView.setVisibility(SurfaceView.VISIBLE);
 		mCustomCameraView.setCvCameraViewListener(this);
-
+		
 		startOrientationListener();
 
 		claheAlgorithm = new ClaheAlgorithm();
 
 		snapdragonFacialFeaturesDetector = new SnapdragonFacialFeaturesDetector(
-				((WindowManager) getSystemService(Context.WINDOW_SERVICE))
-						.getDefaultDisplay(),
-				TAG, mCameraId);
+				((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(), TAG, mCameraId);
 
 		cascadeFaceDetector = new CascadeFaceDetector();
 		cascadeEyesDetector = new CascadeEyesDetector();
@@ -256,8 +247,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		colorSegmentationFaceDetector = new ColorSegmentationFaceDetector();
 
-		drowsinessDetector = new DrowsinessDetector(cascadeFaceDetector,
-				cascadeEyesDetector, cascadeMouthDetector, cascadeNoseDetector,
+		drowsinessDetector = new DrowsinessDetector(cascadeFaceDetector, cascadeEyesDetector, cascadeMouthDetector, cascadeNoseDetector,
 				claheAlgorithm);
 
 		initVerticalSeekBars();
@@ -266,8 +256,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	private void startOrientationListener() {
-		orientationEventListener = new OrientationEventListener(this,
-				SensorManager.SENSOR_DELAY_NORMAL) {
+		orientationEventListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL) {
 			@Override
 			public void onOrientationChanged(int orientation) {
 				deviceOrientation = orientation;
@@ -290,8 +279,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	@Override
 	public void onResume() {
 		super.onResume();
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_9, this,
-				mLoaderCallback);
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_9, this, mLoaderCallback);
 	}
 
 	public void onDestroy() {
@@ -325,6 +313,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		cornersThis = new ArrayList<Point>();
 		cornersPrev = new ArrayList<Point>();
+		
+		android.hardware.Camera.Size resolution = mCustomCameraView.getCamera().new Size(640, 480);
+		mCustomCameraView.setResolution(resolution);
 	}
 
 	public void onCameraViewStopped() {
@@ -364,12 +355,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		final int viewMode = mViewMode;
 		final int eqHistMode = mEqHistMode;
 
-		if (gaussCheckbox.isChecked()
-				&& viewMode != ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION) {
-//			Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
-//					new Size(gaussSize, gaussSize), 0);
+		if (gaussCheckbox.isChecked() && viewMode != ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION) {
+			// Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
+			// new Size(gaussSize, gaussSize), 0);
 			AsyncTask.Status gaussBlurSyncTaskStatus = gaussBlurAsyncTask.getStatus();
-			if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.FINISHED)){
+			if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.FINISHED)) {
 				Log.i(TAG, "gaussBlurAsyncTask is finished");
 				try {
 					currentlyUsedFrame = gaussBlurAsyncTask.get();
@@ -380,11 +370,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				}
 				gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
 				gaussBlurAsyncTask.execute();
-			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.PENDING)){
+			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.PENDING)) {
 				Log.i(TAG, "gaussBlurAsyncTask is pending");
 				gaussBlurAsyncTask.setFrame(currentlyUsedFrame);
 				gaussBlurAsyncTask.execute();
-			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.RUNNING)){
+			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.RUNNING)) {
 				Log.i(TAG, "gaussBlurAsyncTask is running");
 			}
 		}
@@ -408,27 +398,24 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_SNAPDRAGON:
-			snapdragonFacialFeaturesDetector.findFace(mRgba, this
-					.getResources().getConfiguration().orientation);
+			snapdragonFacialFeaturesDetector.findFace(mRgba, this.getResources().getConfiguration().orientation);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 			Rect face = cascadeFaceDetector.findFace(currentlyUsedFrame);
 			if (face != null) {
-				DrawingUtils.drawRect(face, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
+				DrawingUtils.drawRect(face, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
 			}
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP:
-			FindFace(currentlyUsedFrame.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			FindFace(currentlyUsedFrame.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA_ASYNC_TASK:
 			Rect foundFaceFromAsyncTask = null;
 			AsyncTask.Status faceDetectSyncTaskStatus = faceDetectionAsyncTask.getStatus();
-			if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.FINISHED)){
+			if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.FINISHED)) {
 				Log.i(TAG, "faceDetectAsyncTask is finished");
 				try {
 					foundFaceFromAsyncTask = faceDetectionAsyncTask.get();
@@ -439,32 +426,26 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				}
 				faceDetectionAsyncTask = new FaceDetectionAsyncTask(currentlyUsedFrame, cascadeFaceDetector);
 				faceDetectionAsyncTask.execute();
-			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.PENDING)){
+			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.PENDING)) {
 				Log.i(TAG, "faceDetectAsyncTask is pending");
 				faceDetectionAsyncTask.setFrame(currentlyUsedFrame);
 				faceDetectionAsyncTask.setCascadeFaceDetector(cascadeFaceDetector);
 				faceDetectionAsyncTask.execute();
-			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.RUNNING)){
+			} else if (faceDetectSyncTaskStatus.equals(AsyncTask.Status.RUNNING)) {
 				Log.i(TAG, "faceDetectAsyncTask is running");
 			}
-			if (foundFaceFromAsyncTask != null) {
-				DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
-			} else if (faceDetectionAsyncTask != null){
+			if (faceDetectionAsyncTask != null && foundFaceFromAsyncTask == null) {
 				foundFaceFromAsyncTask = faceDetectionAsyncTask.getFoundFace();
-				DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
 			}
+			DrawingUtils.drawRect(foundFaceFromAsyncTask, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA:
-			currentlyUsedFrame = colorSegmentationFaceDetector
-					.detectFaceYCrCb(currentlyUsedFrame);
+			currentlyUsedFrame = colorSegmentationFaceDetector.detectFaceYCrCb(currentlyUsedFrame);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP:
-			SegmentSkin(mRgba.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			SegmentSkin(mRgba.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
@@ -475,17 +456,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace != null) {
-				DrawingUtils.drawRect(foundFace, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
+				DrawingUtils.drawRect(foundFace, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
 				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFace);
-				DrawingUtils.drawRects(eyes, currentlyUsedFrame,
-						DrawingConstants.EYES_RECT_COLOR);
+				DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR);
 			}
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_CPP:
-			FindEyes(currentlyUsedFrame.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			FindEyes(currentlyUsedFrame.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_MOUTH_CASCADE_JAVA:
@@ -496,18 +474,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace2 = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace2 != null) {
-				DrawingUtils.drawRect(foundFace2, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
+				DrawingUtils.drawRect(foundFace2, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
 				if (isMouthWithEyes) {
-					Rect[] eyes = cascadeEyesDetector.findEyes(
-							currentlyUsedFrame, foundFace2);
-					DrawingUtils.drawRects(eyes, currentlyUsedFrame,
-							DrawingConstants.EYES_RECT_COLOR);
+					Rect[] eyes = cascadeEyesDetector.findEyes(currentlyUsedFrame, foundFace2);
+					DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR);
 				}
-				Rect[] mouths = cascadeMouthDetector.findMouths(
-						currentlyUsedFrame, foundFace2);
-				DrawingUtils.drawRects(mouths, currentlyUsedFrame,
-						DrawingConstants.MOUTH_RECT_COLOR);
+				Rect mouth = cascadeMouthDetector.findMouth(currentlyUsedFrame, foundFace2);
+				DrawingUtils.drawRect(mouth, currentlyUsedFrame, DrawingConstants.MOUTH_RECT_COLOR);
 			}
 			break;
 
@@ -519,12 +492,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace3 = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace3 != null) {
-				DrawingUtils.drawRect(foundFace3, currentlyUsedFrame,
-						DrawingConstants.FACE_RECT_COLOR);
-				Rect[] noses = cascadeNoseDetector.findNoses(
-						currentlyUsedFrame, foundFace3);
-				DrawingUtils.drawRects(noses, currentlyUsedFrame,
-						DrawingConstants.NOSE_RECT_COLOR);
+				DrawingUtils.drawRect(foundFace3, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
+				Rect[] noses = cascadeNoseDetector.findNoses(currentlyUsedFrame, foundFace3);
+				DrawingUtils.drawRects(noses, currentlyUsedFrame, DrawingConstants.NOSE_RECT_COLOR);
 			}
 			break;
 
@@ -534,14 +504,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			int rows = cornersPoints.rows();
 			List<Point> listOfPoints = cornersPoints.toList();
 			for (int x = 0; x < rows; x++) {
-				Core.circle(currentlyUsedFrame, listOfPoints.get(x), 5,
-						DrawingConstants.RED);
+				Core.circle(currentlyUsedFrame, listOfPoints.get(x), 5, DrawingConstants.RED);
 			}
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP:
-			FindFeatures(mGray.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			FindFeatures(mGray.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_JAVA:
@@ -553,18 +521,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			int apertureSize = 3;
 			double k = 0.04;
 
-			Imgproc.cornerHarris(mGray, dst, blockSize, apertureSize, k,
-					Imgproc.BORDER_DEFAULT);
-			Core.normalize(dst, dst_norm, 0, 255, Core.NORM_MINMAX,
-					CvType.CV_32FC1, new Mat());
+			Imgproc.cornerHarris(mGray, dst, blockSize, apertureSize, k, Imgproc.BORDER_DEFAULT);
+			Core.normalize(dst, dst_norm, 0, 255, Core.NORM_MINMAX, CvType.CV_32FC1, new Mat());
 			Core.convertScaleAbs(dst_norm, dst_norm_scaled);
 
 			currentlyUsedFrame = dst_norm_scaled;
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_CPP:
-			FindCornerHarris(mGray.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			FindCornerHarris(mGray.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
 		case ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_JAVA:
@@ -574,8 +539,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 				matOpFlowThis.copyTo(matOpFlowPrev);
 
-				Imgproc.goodFeaturesToTrack(matOpFlowPrev, MOPcorners,
-						iGFFTMax, 0.05, 20);
+				Imgproc.goodFeaturesToTrack(matOpFlowPrev, MOPcorners, iGFFTMax, 0.05, 20);
 				mMOP2fptsPrev.fromArray(MOPcorners.toArray());
 
 				mMOP2fptsPrev.copyTo(mMOP2fptsSafe);
@@ -585,8 +549,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 				Imgproc.cvtColor(mRgba, matOpFlowThis, Imgproc.COLOR_RGBA2GRAY);
 
-				Imgproc.goodFeaturesToTrack(matOpFlowThis, MOPcorners,
-						iGFFTMax, 0.05, 20);
+				Imgproc.goodFeaturesToTrack(matOpFlowThis, MOPcorners, iGFFTMax, 0.05, 20);
 				mMOP2fptsThis.fromArray(MOPcorners.toArray());
 
 				mMOP2fptsSafe.copyTo(mMOP2fptsPrev);
@@ -594,8 +557,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				mMOP2fptsThis.copyTo(mMOP2fptsSafe);
 			}
 
-			Video.calcOpticalFlowPyrLK(matOpFlowPrev, matOpFlowThis,
-					mMOP2fptsPrev, mMOP2fptsThis, mMOBStatus, mMOFerr);
+			Video.calcOpticalFlowPyrLK(matOpFlowPrev, matOpFlowThis, mMOP2fptsPrev, mMOP2fptsThis, mMOBStatus, mMOFerr);
 
 			cornersPrev = mMOP2fptsPrev.toList();
 			cornersThis = mMOP2fptsThis.toList();
@@ -607,23 +569,19 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				if (byteStatus.get(x) == 1) {
 					Point pt = cornersThis.get(x);
 					Point pt2 = cornersPrev.get(x);
-					Core.circle(currentlyUsedFrame, pt, 5,
-							DrawingConstants.RED, 5);
-					Core.line(currentlyUsedFrame, pt, pt2,
-							DrawingConstants.RED, 3);
+					Core.circle(currentlyUsedFrame, pt, 5, DrawingConstants.RED, 5);
+					Core.line(currentlyUsedFrame, pt, pt2, DrawingConstants.RED, 3);
 				}
 			}
 
 			break;
 
 		case ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_CPP:
-			CalculateOpticalFlow(mRgba.getNativeObjAddr(),
-					currentlyUsedFrame.getNativeObjAddr());
+			CalculateOpticalFlow(mRgba.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
-			currentlyUsedFrame = drowsinessDetector.processDetection(mGray,
-					mRgba);
+			currentlyUsedFrame = drowsinessDetector.processDetection(mGray, mRgba);
 			break;
 
 		}
@@ -712,30 +670,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA;
 				break;
 			}
-		} else if (item.getGroupId() == 7) {
-			String toastMesage = new String();
-			mCustomCameraView.setVisibility(SurfaceView.GONE);
-			switch (item.getItemId()) {
-			case 0:
-				mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.custom_camera_view);
-				toastMesage = "Java Camera";
-				isJavaCamera = true;
-				break;
-			case 1:
-				mCustomCameraView = (CameraBridgeViewBase) findViewById(R.id.native_camera_view);
-				toastMesage = "Native Camera";
-				break;
-			}
-			mCustomCameraView.setVisibility(SurfaceView.VISIBLE);
-			mCustomCameraView.setCvCameraViewListener(this);
-			mCustomCameraView.enableView();
-			Toast toast = Toast.makeText(this, toastMesage, Toast.LENGTH_LONG);
-			toast.show();
 		}
 		return true;
 	}
 
 	public void showOptionsMenu(View v) {
+		if (mCustomCameraView != null) {
+			Log.i(TAG, ((CustomCameraView) mCustomCameraView).getCameraInfo());
+		}
 		openOptionsMenu();
 	}
 
@@ -746,11 +688,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		popup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem menuitem) {
-				int faceResourceId = getResources()
-						.getIdentifier(menuitem.getTitle().toString(), "raw",
-								getPackageName());
+				int faceResourceId = getResources().getIdentifier(menuitem.getTitle().toString(), "raw", getPackageName());
 				InputStream is = getResources().openRawResource(faceResourceId);
 				File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+				cascadeFaceDetector.setCascadeFileName(menuitem.getTitle().toString().concat(".xml"));
 				File faceFile = cascadeFaceDetector.prepare(is, cascadeDir);
 				PrepareFindFace(faceFile.getAbsolutePath());
 				return false;
@@ -765,9 +706,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		} else {
 			isFaceTracking = true;
 		}
-		Toast.makeText(this,
-				"Face tracking: " + String.valueOf(isFaceTracking),
-				Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "Face tracking: " + String.valueOf(isFaceTracking), Toast.LENGTH_SHORT).show();
 	}
 
 	public void showCascadeEyesFilesMenu(final View v) {
@@ -777,13 +716,16 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		popup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem menuitem) {
-				int eyesResourceId = getResources()
-						.getIdentifier(menuitem.getTitle().toString(), "raw",
-								getPackageName());
+				int eyesResourceId = getResources().getIdentifier(menuitem.getTitle().toString(), "raw", getPackageName());
 				InputStream is = getResources().openRawResource(eyesResourceId);
 				File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+				cascadeEyesDetector.setCascadeFileName(menuitem.getTitle().toString().concat(".xml"));
 				File faceFile = cascadeEyesDetector.prepare(is, cascadeDir);
-				PrepareFindFace(faceFile.getAbsolutePath());
+				if (faceFile.getName().contains("eyepair")){
+					cascadeEyesDetector.setBothEyes(true);
+				} else {
+					cascadeEyesDetector.setBothEyes(false);
+				}
 				return false;
 			}
 		});
@@ -797,17 +739,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			mResolutionList = mCustomCameraView.getResolutionList();
 			mResolutionMenuItems = new MenuItem[mResolutionList.size()];
 
-			ListIterator<android.hardware.Camera.Size> resolutionItr = mResolutionList
-					.listIterator();
+			ListIterator<android.hardware.Camera.Size> resolutionItr = mResolutionList.listIterator();
 			int idx = 0;
 			while (resolutionItr.hasNext()) {
 				android.hardware.Camera.Size element = resolutionItr.next();
-				mResolutionMenuItems[idx] = popup.getMenu().add(
-						2,
-						idx,
-						Menu.NONE,
-						Integer.valueOf(element.width).toString() + "x"
-								+ Integer.valueOf(element.height).toString());
+				mResolutionMenuItems[idx] = popup.getMenu().add(2, idx, Menu.NONE,
+						Integer.valueOf(element.width).toString() + "x" + Integer.valueOf(element.height).toString());
 				idx++;
 			}
 
@@ -815,26 +752,21 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
+					int currentViewMode = mViewMode;
+					mViewMode = ViewModesConstants.VIEW_MODE_NONE;
 					int id = item.getItemId();
-					android.hardware.Camera.Size resolution = mResolutionList
-							.get(id);
+					android.hardware.Camera.Size resolution = mResolutionList.get(id);
 					mCustomCameraView.setResolution(resolution);
 					resolution = mCustomCameraView.getResolution();
-					String caption = Integer.valueOf(resolution.width)
-							.toString()
-							+ "x"
-							+ Integer.valueOf(resolution.height).toString();
-					Toast.makeText(getBaseContext(), caption,
-							Toast.LENGTH_SHORT).show();
+					String caption = Integer.valueOf(resolution.width).toString() + "x" + Integer.valueOf(resolution.height).toString();
+					Toast.makeText(getBaseContext(), caption, Toast.LENGTH_SHORT).show();
+					mViewMode = currentViewMode;
 					return false;
 				}
 			});
 			popup.show();
 		} else {
-			Toast.makeText(
-					getBaseContext(),
-					"This camera view does not support changing the resolution",
-					Toast.LENGTH_SHORT).show();
+			Toast.makeText(getBaseContext(), "This camera view does not support changing the resolution", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -891,10 +823,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewFindFaceMenu.add(1, 1, Menu.NONE, "Haar (Java)");
 		mItemPreviewFindFaceMenu.add(1, 2, Menu.NONE, "Haar (Cpp)");
 		mItemPreviewFindFaceMenu.add(1, 3, Menu.NONE, "Haar (Java AsyncTask)");
-		mItemPreviewFindFaceMenu.add(1, 4, Menu.NONE,
-				"Color segmentation (Java)");
-		mItemPreviewFindFaceMenu.add(1, 5, Menu.NONE,
-				"Color segmentation (Cpp)");
+		mItemPreviewFindFaceMenu.add(1, 4, Menu.NONE, "Color segmentation (Java)");
+		mItemPreviewFindFaceMenu.add(1, 5, Menu.NONE, "Color segmentation (Cpp)");
 
 		mItemPreviewFindEyesMenu.add(2, 0, Menu.NONE, "Java");
 		mItemPreviewFindEyesMenu.add(2, 1, Menu.NONE, "Cpp");
@@ -913,9 +843,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewOtherMenu.add(5, 4, Menu.NONE, "Optical flow (Java)");
 		mItemPreviewOtherMenu.add(5, 5, Menu.NONE, "Optical flow (Cpp)");
 
-		mItemPreviewChooseCamera.add(7, 0, Menu.NONE, "Java");
-		mItemPreviewChooseCamera.add(7, 1, Menu.NONE, "Native");
-
 		return true;
 	}
 
@@ -932,6 +859,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		boolean[] checkedItems = new boolean[items.length];
 		Arrays.fill(checkedItems, true);
 		drowsinessDetector.setAllDetectionElements(true);
+		drowsinessDetector.setAdditionalEqualization(false);
+		checkedItems[checkedItems.length - 1] = false;
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
@@ -968,8 +897,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private void changeVisibiltyOfChildViews(View parentView, int visibiltyFlag) {
 		if (parentView instanceof ViewGroup) {
 			for (int i = 0; i < ((ViewGroup) parentView).getChildCount(); i++) {
-				changeVisibiltyOfChildViews(
-						((ViewGroup) parentView).getChildAt(i), visibiltyFlag);
+				changeVisibiltyOfChildViews(((ViewGroup) parentView).getChildAt(i), visibiltyFlag);
 			}
 		} else {
 			if (!(parentView instanceof CustomCameraView || parentView.getId() == R.id.showHideGui)) {
@@ -989,31 +917,19 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				if (menuItemTitle.equals("Mouth")) {
 					isMouthChosen = true;
 					isNoseChosen = false;
-					minObjectValueText.setText(String
-							.valueOf(cascadeMouthDetector
-									.getmRelativeMinObjectSize()));
-					minObjectSeekBar.setProgress((int) (cascadeMouthDetector
-							.getmRelativeMinObjectSize() * 100));
-					maxObjectValueText.setText(String
-							.valueOf(cascadeMouthDetector
-									.getmRelativeMaxObjectSize()));
-					maxObjectSeekBar.setProgress((int) (cascadeMouthDetector
-							.getmRelativeMaxObjectSize() * 100));
+					minObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMinObjectSize()));
+					minObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMinObjectSize() * 100));
+					maxObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMaxObjectSize()));
+					maxObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMaxObjectSize() * 100));
 					Button thisButton = (Button) v;
 					thisButton.setText("Size: mouth");
 				} else if (menuItemTitle.equals("Nose")) {
 					isNoseChosen = true;
 					isMouthChosen = false;
-					minObjectValueText.setText(String
-							.valueOf(cascadeNoseDetector
-									.getmRelativeMinObjectSize()));
-					minObjectSeekBar.setProgress((int) (cascadeNoseDetector
-							.getmRelativeMinObjectSize() * 100));
-					maxObjectValueText.setText(String
-							.valueOf(cascadeNoseDetector
-									.getmRelativeMaxObjectSize()));
-					maxObjectSeekBar.setProgress((int) (cascadeNoseDetector
-							.getmRelativeMaxObjectSize() * 100));
+					minObjectValueText.setText(String.valueOf(cascadeNoseDetector.getmRelativeMinObjectSize()));
+					minObjectSeekBar.setProgress((int) (cascadeNoseDetector.getmRelativeMinObjectSize() * 100));
+					maxObjectValueText.setText(String.valueOf(cascadeNoseDetector.getmRelativeMaxObjectSize()));
+					maxObjectSeekBar.setProgress((int) (cascadeNoseDetector.getmRelativeMaxObjectSize() * 100));
 					Button thisButton = (Button) v;
 					thisButton.setText("Size: nose");
 				}
@@ -1027,144 +943,120 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		scaleFactorSeekBar = (VerticalSeekBar) findViewById(R.id.scaleFactorSeekBar);
 		scaleFactorValueText = (TextView) findViewById(R.id.scaleFactorValueText);
-		scaleFactorValueText.setText(String.valueOf(cascadeFaceDetector
-				.getScaleFactor()));
-		scaleFactorSeekBar.setProgress((int) ((cascadeFaceDetector
-				.getScaleFactor() / DetectorConstants.MAX_SCALE_FACTOR) * 100));
-		scaleFactorSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		scaleFactorValueText.setText(String.valueOf(cascadeFaceDetector.getScaleFactor()));
+		scaleFactorSeekBar.setProgress((int) ((cascadeFaceDetector.getScaleFactor() / DetectorConstants.MAX_SCALE_FACTOR) * 100));
+		scaleFactorSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						float currentValue = ((progress * (DetectorConstants.MAX_SCALE_FACTOR - DetectorConstants.MIN_SCALE_FACTOR)) / 100)
-								+ DetectorConstants.MIN_SCALE_FACTOR;
-						scaleFactorValueText.setText(String.valueOf(MathUtils
-								.round(currentValue, 2)));
-						switch (mViewMode) {
-						case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
-							cascadeFaceDetector.setScaleFactor(currentValue);
-							break;
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = ((progress * (DetectorConstants.MAX_SCALE_FACTOR - DetectorConstants.MIN_SCALE_FACTOR)) / 100)
+						+ DetectorConstants.MIN_SCALE_FACTOR;
+				scaleFactorValueText.setText(String.valueOf(MathUtils.round(currentValue, 2)));
+				switch (mViewMode) {
+				case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
+					cascadeFaceDetector.setScaleFactor(currentValue);
+					break;
 
-						case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
-							cascadeEyesDetector.setScaleFactor(currentValue);
-							break;
-						}
-					}
-				});
+				case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
+					cascadeEyesDetector.setScaleFactor(currentValue);
+					break;
+				}
+			}
+		});
 
 		minNeighsSeekBar = (VerticalSeekBar) findViewById(R.id.minNeighsSeekBar);
 		minNeighsValueText = (TextView) findViewById(R.id.minNeighboursValueText);
-		minNeighsValueText.setText(String.valueOf(cascadeFaceDetector
-				.getMinNeighbours()));
-		minNeighsSeekBar.setProgress(cascadeFaceDetector.getMinNeighbours()
-				* 100 / DetectorConstants.MAX_MIN_NEIGHBOURS);
-		minNeighsSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		minNeighsValueText.setText(String.valueOf(cascadeFaceDetector.getMinNeighbours()));
+		minNeighsSeekBar.setProgress(cascadeFaceDetector.getMinNeighbours() * 100 / DetectorConstants.MAX_MIN_NEIGHBOURS);
+		minNeighsSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						int currentValue = ((progress * (DetectorConstants.MAX_MIN_NEIGHBOURS - DetectorConstants.MIN_MIN_NEIGHBOURS)) / 100)
-								+ DetectorConstants.MIN_MIN_NEIGHBOURS;
-						minNeighsValueText.setText(String.valueOf(MathUtils
-								.round(currentValue, 2)));
-						switch (mViewMode) {
-						case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
-							cascadeFaceDetector.setMinNeighbours(currentValue);
-							break;
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_MIN_NEIGHBOURS - DetectorConstants.MIN_MIN_NEIGHBOURS)) / 100)
+						+ DetectorConstants.MIN_MIN_NEIGHBOURS;
+				minNeighsValueText.setText(String.valueOf(MathUtils.round(currentValue, 2)));
+				switch (mViewMode) {
+				case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
+					cascadeFaceDetector.setMinNeighbours(currentValue);
+					break;
 
-						case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
-							cascadeEyesDetector.setMinNeighbours(currentValue);
-							break;
-						}
-					}
-				});
+				case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA:
+					cascadeEyesDetector.setMinNeighbours(currentValue);
+					break;
+				}
+			}
+		});
 
 		minFaceSeekBar = (VerticalSeekBar) findViewById(R.id.minFaceSeekBar);
 		minFaceValueText = (TextView) findViewById(R.id.minFaceValueText);
-		minFaceValueText.setText(String.valueOf(cascadeFaceDetector
-				.getmRelativeMinObjectSize()));
-		minFaceSeekBar.setProgress((int) (cascadeFaceDetector
-				.getmRelativeMinObjectSize() * 100));
-		minFaceSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		minFaceValueText.setText(String.valueOf(cascadeFaceDetector.getmRelativeMinObjectSize()));
+		minFaceSeekBar.setProgress((int) (cascadeFaceDetector.getmRelativeMinObjectSize() * 100));
+		minFaceSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						float currentValue = (float) ((float) progress / 100.0);
-						float maxFace = Float.parseFloat(maxFaceValueText
-								.getText().toString());
-						if (currentValue > maxFace) {
-							currentValue = maxFace;
-						}
-						minFaceValueText.setText(String.valueOf(currentValue));
-						cascadeFaceDetector.setSizeManuallyChanged(true);
-						cascadeFaceDetector
-								.setmRelativeMinObjectSize(currentValue);
-					}
-				});
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = (float) ((float) progress / 100.0);
+				float maxFace = Float.parseFloat(maxFaceValueText.getText().toString());
+				if (currentValue > maxFace) {
+					currentValue = maxFace;
+				}
+				minFaceValueText.setText(String.valueOf(currentValue));
+				cascadeFaceDetector.setSizeManuallyChanged(true);
+				cascadeFaceDetector.setmRelativeMinObjectSize(currentValue);
+			}
+		});
 
 		maxFaceSeekBar = (VerticalSeekBar) findViewById(R.id.maxFaceSeekBar);
 		maxFaceValueText = (TextView) findViewById(R.id.maxFaceValueText);
-		maxFaceValueText.setText(String.valueOf(cascadeFaceDetector
-				.getmRelativeMaxObjectSize()));
-		maxFaceSeekBar.setProgress((int) (cascadeFaceDetector
-				.getmRelativeMaxObjectSize() * 100));
-		maxFaceSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		maxFaceValueText.setText(String.valueOf(cascadeFaceDetector.getmRelativeMaxObjectSize()));
+		maxFaceSeekBar.setProgress((int) (cascadeFaceDetector.getmRelativeMaxObjectSize() * 100));
+		maxFaceSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						float currentValue = (float) ((float) progress / 100.0);
-						float minFace = Float.parseFloat(minFaceValueText
-								.getText().toString());
-						if (currentValue < minFace) {
-							currentValue = minFace;
-						}
-						maxFaceValueText.setText(String.valueOf(currentValue));
-						cascadeFaceDetector.setSizeManuallyChanged(true);
-						cascadeFaceDetector
-								.setmRelativeMaxObjectSize(currentValue);
-					}
-				});
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = (float) ((float) progress / 100.0);
+				float minFace = Float.parseFloat(minFaceValueText.getText().toString());
+				if (currentValue < minFace) {
+					currentValue = minFace;
+				}
+				maxFaceValueText.setText(String.valueOf(currentValue));
+				cascadeFaceDetector.setSizeManuallyChanged(true);
+				cascadeFaceDetector.setmRelativeMaxObjectSize(currentValue);
+			}
+		});
 
 		minEyeSeekBar = (VerticalSeekBar) findViewById(R.id.minEyeSeekBar);
 		minEyeValueText = (TextView) findViewById(R.id.minEyeValueText);
-		minEyeValueText.setText(String.valueOf(cascadeEyesDetector
-				.getmRelativeMinObjectSize()));
-		minEyeSeekBar.setProgress((int) (cascadeEyesDetector
-				.getmRelativeMinObjectSize() * 100));
+		minEyeValueText.setText(String.valueOf(cascadeEyesDetector.getmRelativeMinObjectSize()));
+		minEyeSeekBar.setProgress((int) (cascadeEyesDetector.getmRelativeMinObjectSize() * 100));
 		minEyeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
@@ -1175,11 +1067,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 
 			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				float currentValue = (float) ((float) progress / 100.0);
-				float maxEye = Float.parseFloat(maxEyeValueText.getText()
-						.toString());
+				float maxEye = Float.parseFloat(maxEyeValueText.getText().toString());
 				if (currentValue > maxEye) {
 					currentValue = maxEye;
 				}
@@ -1191,10 +1081,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		maxEyeSeekBar = (VerticalSeekBar) findViewById(R.id.maxEyeSeekBar);
 		maxEyeValueText = (TextView) findViewById(R.id.maxEyeValueText);
-		maxEyeValueText.setText(String.valueOf(cascadeEyesDetector
-				.getmRelativeMaxObjectSize()));
-		maxEyeSeekBar.setProgress((int) (cascadeEyesDetector
-				.getmRelativeMaxObjectSize() * 100));
+		maxEyeValueText.setText(String.valueOf(cascadeEyesDetector.getmRelativeMaxObjectSize()));
+		maxEyeSeekBar.setProgress((int) (cascadeEyesDetector.getmRelativeMaxObjectSize() * 100));
 		maxEyeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
@@ -1205,11 +1093,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 
 			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				float currentValue = (float) ((float) progress / 100.0);
-				float minEye = Float.parseFloat(minEyeValueText.getText()
-						.toString());
+				float minEye = Float.parseFloat(minEyeValueText.getText().toString());
 				if (currentValue < minEye) {
 					currentValue = minEye;
 				}
@@ -1222,150 +1108,123 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		minObjectSeekBar = (VerticalSeekBar) findViewById(R.id.minObjectSeekBar);
 		minObjectValueText = (TextView) findViewById(R.id.minObjectValueText);
 		if (isMouthChosen) {
-			minObjectValueText.setText(String.valueOf(cascadeMouthDetector
-					.getmRelativeMinObjectSize()));
-			minObjectSeekBar.setProgress((int) (cascadeMouthDetector
-					.getmRelativeMinObjectSize() * 100));
+			minObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMinObjectSize()));
+			minObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMinObjectSize() * 100));
 		} else if (isNoseChosen) {
-			minObjectValueText.setText(String.valueOf(cascadeNoseDetector
-					.getmRelativeMinObjectSize()));
-			minObjectSeekBar.setProgress((int) (cascadeNoseDetector
-					.getmRelativeMinObjectSize() * 100));
+			minObjectValueText.setText(String.valueOf(cascadeNoseDetector.getmRelativeMinObjectSize()));
+			minObjectSeekBar.setProgress((int) (cascadeNoseDetector.getmRelativeMinObjectSize() * 100));
 		}
-		minObjectSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						float currentValue = (float) ((float) progress / 100.0);
-						float maxObject = Float.parseFloat(maxObjectValueText
-								.getText().toString());
-						if (currentValue > maxObject) {
-							currentValue = maxObject;
-						}
-						minObjectValueText.setText(String.valueOf(currentValue));
-						if (isMouthChosen) {
-							cascadeMouthDetector.setSizeManuallyChanged(true);
-							cascadeMouthDetector
-									.setmRelativeMinObjectSize(currentValue);
-						} else if (isNoseChosen) {
-							cascadeNoseDetector.setSizeManuallyChanged(true);
-							cascadeNoseDetector
-									.setmRelativeMinObjectSize(currentValue);
-						}
-					}
+		minObjectSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = (float) ((float) progress / 100.0);
+				float maxObject = Float.parseFloat(maxObjectValueText.getText().toString());
+				if (currentValue > maxObject) {
+					currentValue = maxObject;
+				}
+				minObjectValueText.setText(String.valueOf(currentValue));
+				if (isMouthChosen) {
+					cascadeMouthDetector.setSizeManuallyChanged(true);
+					cascadeMouthDetector.setmRelativeMinObjectSize(currentValue);
+				} else if (isNoseChosen) {
+					cascadeNoseDetector.setSizeManuallyChanged(true);
+					cascadeNoseDetector.setmRelativeMinObjectSize(currentValue);
+				}
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar arg0) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar arg0) {
+			}
 
-					@Override
-					public void onStopTrackingTouch(SeekBar arg0) {
-					}
-				});
+			@Override
+			public void onStopTrackingTouch(SeekBar arg0) {
+			}
+		});
 
 		maxObjectSeekBar = (VerticalSeekBar) findViewById(R.id.maxObjectSeekBar);
 		maxObjectValueText = (TextView) findViewById(R.id.maxObjectValueText);
 		if (isMouthChosen) {
-			maxObjectValueText.setText(String.valueOf(cascadeMouthDetector
-					.getmRelativeMaxObjectSize()));
-			maxObjectSeekBar.setProgress((int) (cascadeMouthDetector
-					.getmRelativeMaxObjectSize() * 100));
+			maxObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMaxObjectSize()));
+			maxObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMaxObjectSize() * 100));
 		} else if (isNoseChosen) {
-			maxObjectValueText.setText(String.valueOf(cascadeNoseDetector
-					.getmRelativeMaxObjectSize()));
-			maxObjectSeekBar.setProgress((int) (cascadeNoseDetector
-					.getmRelativeMaxObjectSize() * 100));
+			maxObjectValueText.setText(String.valueOf(cascadeNoseDetector.getmRelativeMaxObjectSize()));
+			maxObjectSeekBar.setProgress((int) (cascadeNoseDetector.getmRelativeMaxObjectSize() * 100));
 		}
-		maxObjectSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		maxObjectSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						float currentValue = (float) ((float) progress / 100.0);
-						float minObject = Float.parseFloat(minObjectValueText
-								.getText().toString());
-						if (currentValue < minObject) {
-							currentValue = minObject;
-						}
-						maxObjectValueText.setText(String.valueOf(currentValue));
-						if (isMouthChosen) {
-							cascadeMouthDetector.setSizeManuallyChanged(true);
-							cascadeMouthDetector
-									.setmRelativeMaxObjectSize(currentValue);
-						} else if (isNoseChosen) {
-							cascadeNoseDetector.setSizeManuallyChanged(true);
-							cascadeNoseDetector
-									.setmRelativeMaxObjectSize(currentValue);
-						}
-					}
-				});
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = (float) ((float) progress / 100.0);
+				float minObject = Float.parseFloat(minObjectValueText.getText().toString());
+				if (currentValue < minObject) {
+					currentValue = minObject;
+				}
+				maxObjectValueText.setText(String.valueOf(currentValue));
+				if (isMouthChosen) {
+					cascadeMouthDetector.setSizeManuallyChanged(true);
+					cascadeMouthDetector.setmRelativeMaxObjectSize(currentValue);
+				} else if (isNoseChosen) {
+					cascadeNoseDetector.setSizeManuallyChanged(true);
+					cascadeNoseDetector.setmRelativeMaxObjectSize(currentValue);
+				}
+			}
+		});
 
 		clipLimitSeekBar = (VerticalSeekBar) findViewById(R.id.clipLimitSeekBar);
 		clipLimitValueText = (TextView) findViewById(R.id.clipLimitValueText);
-		clipLimitValueText.setText(String.valueOf(claheAlgorithm
-				.getCurrentClipLimit()));
-		clipLimitSeekBar
-				.setProgress((int) (claheAlgorithm.getCurrentClipLimit() * 100 / DetectorConstants.MAX_CLIP_LIMIT));
-		clipLimitSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		clipLimitValueText.setText(String.valueOf(claheAlgorithm.getCurrentClipLimit()));
+		clipLimitSeekBar.setProgress((int) (claheAlgorithm.getCurrentClipLimit() * 100 / DetectorConstants.MAX_CLIP_LIMIT));
+		clipLimitSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						int currentValue = ((progress * (DetectorConstants.MAX_CLIP_LIMIT - DetectorConstants.MIN_CLIP_LIMIT)) / 100)
-								+ DetectorConstants.MIN_CLIP_LIMIT;
-						clipLimitValueText.setText(String.valueOf(currentValue));
-						claheAlgorithm.setCurrentClipLimit(currentValue);
-					}
-				});
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_CLIP_LIMIT - DetectorConstants.MIN_CLIP_LIMIT)) / 100)
+						+ DetectorConstants.MIN_CLIP_LIMIT;
+				clipLimitValueText.setText(String.valueOf(currentValue));
+				claheAlgorithm.setCurrentClipLimit(currentValue);
+			}
+		});
 
 		tileSizeSeekBar = (VerticalSeekBar) findViewById(R.id.tilesSizeSeekBar);
 		tileSizeValueText = (TextView) findViewById(R.id.tilesSizeValueText);
-		tileSizeValueText.setText(String.valueOf(claheAlgorithm
-				.getCurrentTileSize()));
-		tileSizeSeekBar
-				.setProgress((int) (claheAlgorithm.getCurrentTileSize() * 100 / DetectorConstants.MAX_TILE_SIZE));
-		tileSizeSeekBar
-				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-					@Override
-					public void onStopTrackingTouch(SeekBar seekBar) {
-					}
+		tileSizeValueText.setText(String.valueOf(claheAlgorithm.getCurrentTileSize()));
+		tileSizeSeekBar.setProgress((int) (claheAlgorithm.getCurrentTileSize() * 100 / DetectorConstants.MAX_TILE_SIZE));
+		tileSizeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onStartTrackingTouch(SeekBar seekBar) {
-					}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
 
-					@Override
-					public void onProgressChanged(SeekBar seekBar,
-							int progress, boolean fromUser) {
-						int currentValue = ((progress * (DetectorConstants.MAX_TILE_SIZE - DetectorConstants.MIN_TILE_SIZE)) / 100)
-								+ DetectorConstants.MIN_TILE_SIZE;
-						tileSizeValueText.setText(String.valueOf(currentValue));
-						claheAlgorithm.setCurrentTileSize(currentValue);
-					}
-				});
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_TILE_SIZE - DetectorConstants.MIN_TILE_SIZE)) / 100)
+						+ DetectorConstants.MIN_TILE_SIZE;
+				tileSizeValueText.setText(String.valueOf(currentValue));
+				claheAlgorithm.setCurrentTileSize(currentValue);
+			}
+		});
 
 		gaussSeekBar = (VerticalSeekBar) findViewById(R.id.gaussSeekBar);
 		gaussValueText = (TextView) findViewById(R.id.gaussValueText);
 		gaussValueText.setText(String.valueOf(gaussSize));
-		gaussSeekBar
-				.setProgress((int) (gaussSize * 100 / DetectorConstants.MAX_GAUSS_SIZE));
+		gaussSeekBar.setProgress((int) (gaussSize * 100 / DetectorConstants.MAX_GAUSS_SIZE));
 		gaussSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
@@ -1376,8 +1235,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 
 			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				int currentValue = ((progress * (DetectorConstants.MAX_GAUSS_SIZE - DetectorConstants.MIN_GAUSS_SIZE)) / 100)
 						+ DetectorConstants.MIN_GAUSS_SIZE;
 				if (currentValue % 2 == 0) {
@@ -1401,8 +1259,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	public native void ApplyCLAHE(long matAddrSrc, double clipLimit);
 
-	public native void ApplyCLAHEExt(long matAddrSrc, double clipLimit,
-			double tileWidth, double tileHeight);
+	public native void ApplyCLAHEExt(long matAddrSrc, double clipLimit, double tileWidth, double tileHeight);
 
 	public native void SegmentSkin(long matAddrSrc, long matAddrDst);
 

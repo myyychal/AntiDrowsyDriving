@@ -11,10 +11,10 @@ import com.mpanek.utils.DrawingUtils;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class GaussBlurAsyncTask extends AsyncTask<Void, Void, Mat>{
-	
+public class GaussBlurAsyncTask extends AsyncTask<Void, Void, Mat> {
+
 	private static final String TAG = "AntiDrowsyDriving::GaussBlurAsyncTask";
-	
+
 	private Mat frame;
 	private int size;
 
@@ -26,9 +26,7 @@ public class GaussBlurAsyncTask extends AsyncTask<Void, Void, Mat>{
 
 	@Override
 	protected Mat doInBackground(Void... params) {
-		Log.i(TAG, "gauss: doInBackground, size: " + size);
-		Imgproc.GaussianBlur(frame, frame,
-				new Size(size, size), 0);
+		Imgproc.GaussianBlur(frame, frame, new Size(size, size), 0);
 		return frame;
 	}
 
@@ -39,5 +37,5 @@ public class GaussBlurAsyncTask extends AsyncTask<Void, Void, Mat>{
 	public void setSize(int size) {
 		this.size = size;
 	}
-	
+
 }

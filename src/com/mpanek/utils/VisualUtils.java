@@ -33,18 +33,25 @@ public class VisualUtils {
 		}
 	}
 
-	public static Rect shiftRectInRefToTOherRect(Rect originalRect,
-			Rect referenceRect) {
+	public static Rect shiftRectInRefToTOherRect(Rect originalRect, Rect referenceRect) {
 		if (originalRect != null && referenceRect != null) {
-			Point topLeftPoint = new Point(originalRect.x + referenceRect.x,
-					originalRect.y + referenceRect.y);
-			Point bottomRightPoint = new Point(originalRect.x
-					+ originalRect.width + referenceRect.x, originalRect.y
-					+ originalRect.height + referenceRect.y);
+			Point topLeftPoint = new Point(originalRect.x + referenceRect.x, originalRect.y + referenceRect.y);
+			Point bottomRightPoint = new Point(originalRect.x + originalRect.width + referenceRect.x, originalRect.y + originalRect.height
+					+ referenceRect.y);
 			return new Rect(topLeftPoint, bottomRightPoint);
 		} else {
 			return null;
 		}
+	}
+	
+	public static double calculateSurface(Point tl, Point br){
+		return (br.x - tl.x)*(br.y - tl.y);
+	}
+	
+	public static double calculateSurface(Rect rect){
+		Point tl = rect.tl();
+		Point br = rect.br();
+		return (br.x - tl.x)*(br.y - tl.y);
 	}
 
 }

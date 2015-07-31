@@ -11,30 +11,29 @@ import org.opencv.objdetect.Objdetect;
 import android.util.Log;
 
 public class CascadeDetector {
-	
+
 	protected String cascadeFileName;
 	protected File cascadeFile;
 	protected CascadeClassifier javaDetector;
-	
+
 	protected String TAG;
-	
+
 	protected boolean isSizeManuallyChanged = false;
 
 	protected float scaleFactor = 1.1f;
 	protected int minNeighbours = 2;
 	protected int detectionFlag = Objdetect.CASCADE_SCALE_IMAGE;
-	
+
 	protected float mRelativeMinObjectSize;
 	protected int mAbsoluteMinObjectSize;
 	protected float mRelativeMaxObjectSize;
 	protected int mAbsoluteMaxObjectSize;
-	
+
 	public CascadeDetector() {
 		super();
 	}
 
-	public CascadeDetector(String cascadeFileName, File cascadeFile,
-			CascadeClassifier javaDetector) {
+	public CascadeDetector(String cascadeFileName, File cascadeFile, CascadeClassifier javaDetector) {
 		super();
 		this.cascadeFileName = cascadeFileName;
 		this.cascadeFile = cascadeFile;
@@ -44,27 +43,27 @@ public class CascadeDetector {
 	public String getCascadeFileName() {
 		return cascadeFileName;
 	}
-	
+
 	public void setCascadeFileName(String cascadeFileName) {
 		this.cascadeFileName = cascadeFileName;
 	}
-	
+
 	public File getCascadeFile() {
 		return cascadeFile;
 	}
-	
+
 	public void setCascadeFile(File cascadeFile) {
 		this.cascadeFile = cascadeFile;
 	}
-	
+
 	public CascadeClassifier getJavaDetector() {
 		return javaDetector;
 	}
-	
+
 	public void setJavaDetector(CascadeClassifier javaDetector) {
 		this.javaDetector = javaDetector;
 	}
-	
+
 	public boolean isSizeManuallyChanged() {
 		return isSizeManuallyChanged;
 	}
@@ -88,7 +87,7 @@ public class CascadeDetector {
 	public void setMinNeighbours(int minNeighbours) {
 		this.minNeighbours = minNeighbours;
 	}
-	
+
 	public int getDetectionFlag() {
 		return detectionFlag;
 	}
@@ -132,8 +131,7 @@ public class CascadeDetector {
 	public File prepare(InputStream is, File cascadeDir) {
 		try {
 
-			cascadeFile = new File(cascadeDir,
-					cascadeFileName);
+			cascadeFile = new File(cascadeDir, cascadeFileName);
 
 			FileOutputStream os = new FileOutputStream(cascadeFile);
 
@@ -145,15 +143,12 @@ public class CascadeDetector {
 			is.close();
 			os.close();
 
-			javaDetector = new CascadeClassifier(
-					cascadeFile.getAbsolutePath());
+			javaDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
 			if (javaDetector.empty()) {
 				Log.e(TAG, "Failed to load cascade classifier");
 				javaDetector = null;
 			} else
-				Log.i(TAG,
-						"Loaded cascade classifier from "
-								+ cascadeFile.getAbsolutePath());
+				Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
 
 			cascadeDir.delete();
 

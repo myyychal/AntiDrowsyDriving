@@ -20,7 +20,7 @@ public class CascadeFaceDetector extends CascadeDetector {
 		super();
 		this.cascadeFileName = "lbpcascade_frontalface.xml";
 		TAG = "AntiDrowsyDriving::CascadeFaceDetector";
-		this.scaleFactor = 1.1f;
+		this.scaleFactor = 1.04f;
 		this.minNeighbours = 2;
 		this.mRelativeMinObjectSize = 0.35f;
 		this.mAbsoluteMinObjectSize = 0;
@@ -43,8 +43,7 @@ public class CascadeFaceDetector extends CascadeDetector {
 		}
 
 		Rect foundFace = findFace(imgToFindWithROI);
-		Rect foundFaceShifted = VisualUtils.shiftRectInRefToTOherRect(
-				foundFace, rect);
+		Rect foundFaceShifted = VisualUtils.shiftRectInRefToTOherRect(foundFace, rect);
 		if (foundFaceShifted != null) {
 			lastFoundFace = foundFaceShifted;
 		}
@@ -52,15 +51,11 @@ public class CascadeFaceDetector extends CascadeDetector {
 	}
 
 	public Rect findFace(Mat imgToFind) {
-		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0
-				|| isSizeManuallyChanged) {
+		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0 || isSizeManuallyChanged) {
 			int heightGray = imgToFind.rows();
-			if (Math.round(heightGray * mRelativeMinObjectSize) > 0
-					&& Math.round(heightGray * mRelativeMaxObjectSize) > 0) {
-				mAbsoluteMinObjectSize = Math.round(heightGray
-						* mRelativeMinObjectSize);
-				mAbsoluteMaxObjectSize = Math.round(heightGray
-						* mRelativeMaxObjectSize);
+			if (Math.round(heightGray * mRelativeMinObjectSize) > 0 && Math.round(heightGray * mRelativeMaxObjectSize) > 0) {
+				mAbsoluteMinObjectSize = Math.round(heightGray * mRelativeMinObjectSize);
+				mAbsoluteMaxObjectSize = Math.round(heightGray * mRelativeMaxObjectSize);
 			}
 			isSizeManuallyChanged = false;
 		}
@@ -68,15 +63,9 @@ public class CascadeFaceDetector extends CascadeDetector {
 		MatOfRect faces = new MatOfRect();
 
 		if (javaDetector != null) {
-			javaDetector.detectMultiScale(imgToFind, faces, scaleFactor,
-					minNeighbours, detectionFlag, new Size(
-							mAbsoluteMinObjectSize, mAbsoluteMinObjectSize),
-					new Size(mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
+			javaDetector.detectMultiScale(imgToFind, faces, scaleFactor, minNeighbours, detectionFlag, new Size(mAbsoluteMinObjectSize,
+					mAbsoluteMinObjectSize), new Size(mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
 		}
-
-		Log.i(TAG, "Parameters: scaleFactor " + String.valueOf(scaleFactor));
-		Log.i(TAG, "Parameters: minNeighbours " + String.valueOf(minNeighbours));
-		Log.i(TAG, "Parameters: detectionFlag " + String.valueOf(detectionFlag));
 
 		Rect mainFace = getMainFace(faces);
 		if (mainFace != null) {

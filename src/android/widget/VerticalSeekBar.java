@@ -25,8 +25,7 @@ public class VerticalSeekBar extends SeekBar {
 	}
 
 	@Override
-	protected synchronized void onMeasure(int widthMeasureSpec,
-			int heightMeasureSpec) {
+	protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(heightMeasureSpec, widthMeasureSpec);
 		setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
 	}
@@ -47,8 +46,7 @@ public class VerticalSeekBar extends SeekBar {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_MOVE:
 		case MotionEvent.ACTION_UP:
-			setProgress(getMax()
-					- (int) (getMax() * event.getY() / getHeight()));
+			setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
 			onSizeChanged(getWidth(), getHeight(), 0, 0);
 			break;
 

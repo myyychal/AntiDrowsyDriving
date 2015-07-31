@@ -22,20 +22,18 @@ public class DrowsinessDetector {
 
 	ClaheAlgorithm claheAlgorithm;
 
-	final CharSequence[] items = { "Equalize histogram", "Gaussian blur",
-			"Detect face", "Detect eyes", "Detect nose", "Detect mouth" };
+	final CharSequence[] items = { "Equalize histogram", "Gaussian blur", "Detect face", "Detect eyes", "Detect nose", "Detect mouth", "Additional equalization after face detection" };
 
 	private boolean isEqualizeHistogram = true;
 	private boolean isGaussianBlur = true;
 	private boolean isDetectFace = true;
+	private boolean isAdditionalEqualization = false;
 	private boolean isDetectEyes = true;
 	private boolean isDetectNose = true;
 	private boolean isDetectMouth = true;
 
-	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector,
-			CascadeEyesDetector cascadeEyesDetector,
-			CascadeMouthDetector cascadeMouthDetector,
-			CascadeNoseDetector cascadeNoseDetector) {
+	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
+			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector) {
 		super();
 		this.cascadeFaceDetector = cascadeFaceDetector;
 		this.cascadeEyesDetector = cascadeEyesDetector;
@@ -44,11 +42,8 @@ public class DrowsinessDetector {
 		this.claheAlgorithm = new ClaheAlgorithm();
 	}
 
-	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector,
-			CascadeEyesDetector cascadeEyesDetector,
-			CascadeMouthDetector cascadeMouthDetector,
-			CascadeNoseDetector cascadeNoseDetector,
-			ClaheAlgorithm claheAlgorithm) {
+	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
+			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector, ClaheAlgorithm claheAlgorithm) {
 		this.cascadeFaceDetector = cascadeFaceDetector;
 		this.cascadeEyesDetector = cascadeEyesDetector;
 		this.cascadeMouthDetector = cascadeMouthDetector;
@@ -63,23 +58,30 @@ public class DrowsinessDetector {
 		if (isGaussianBlur) {
 			Imgproc.GaussianBlur(mGray, mGray, new Size(5, 5), 0);
 		}
-		Rect foundFaceInDetection = new Rect(0, 0, mGray.width(),
-				mGray.height());
+		Rect foundFaceInDetection = new Rect(0, 0, mGray.width(), mGray.height());
 		if (isDetectFace) {
 			Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
 			double boundingMultiplier = 0.1;
 			boundingBox.x += boundingMultiplier * mGray.width();
 			boundingBox.width -= 2 * boundingMultiplier * mGray.width();
-			foundFaceInDetection = cascadeFaceDetector.findFace(mGray,
-					boundingBox);
+			foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
 			if (foundFaceInDetection == null) {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
 		}
 		if (foundFaceInDetection != null) {
 			Rect[] eyes = null;
-			Rect[] mouths = null;
-			Rect[] noses = null;
+			Rect mouth = null;
+			Rect nose = null;
+			
+			Mat imgToFindWithROI;
+			imgToFindWithROI = new Mat(mGray, foundFaceInDetection);
+
+			if (isAdditionalEqualization){
+				ClaheAlgorithm claheAlgorithm = new ClaheAlgorithm();
+				claheAlgorithm.process(imgToFindWithROI);
+			}
+			
 			if (isDetectEyes) {
 				Rect foundFaceForEyes = foundFaceInDetection.clone();
 				eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes);
@@ -89,33 +91,28 @@ public class DrowsinessDetector {
 			}
 			if (isDetectMouth) {
 				Rect foundFaceForMouth = foundFaceInDetection.clone();
-				mouths = cascadeMouthDetector.findMouths(mGray,
-						foundFaceForMouth);
-				if (mouths == null || mouths.length == 0) {
-					mouths = cascadeMouthDetector.getLastFoundMouths();
+				mouth = cascadeMouthDetector.findMouth(mGray, foundFaceForMouth);
+				if (mouth == null) {
+					mouth = cascadeMouthDetector.getLastFoundMouth();
 				}
 			}
 			if (isDetectNose) {
 				Rect foundFaceForNose = foundFaceInDetection.clone();
-				noses = cascadeNoseDetector.findNoses(mGray, foundFaceForNose);
-				if (noses == null || noses.length == 0) {
-					noses = cascadeNoseDetector.getLastFoundNoses();
+				nose = cascadeNoseDetector.findNose(mGray, foundFaceForNose);
+				if (nose == null) {
+					nose = cascadeNoseDetector.getLastFoundNose();
 				}
 			}
 
 			Imgproc.cvtColor(mGray, mRgba, Imgproc.COLOR_GRAY2RGBA);
 
-			DrawingUtils.drawRect(foundFaceInDetection, mRgba,
-					DrawingConstants.FACE_RECT_COLOR);
+			DrawingUtils.drawRect(foundFaceInDetection, mRgba, DrawingConstants.FACE_RECT_COLOR);
 
-			DrawingUtils.drawRects(eyes, mRgba,
-					DrawingConstants.EYES_RECT_COLOR);
+			DrawingUtils.drawRects(eyes, mRgba, DrawingConstants.EYES_RECT_COLOR);
 
-			DrawingUtils.drawRects(mouths, mRgba,
-					DrawingConstants.MOUTH_RECT_COLOR);
+			DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR);
 
-			DrawingUtils.drawRects(noses, mRgba,
-					DrawingConstants.NOSE_RECT_COLOR);
+			DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR);
 
 		} else {
 			Imgproc.cvtColor(mGray, mRgba, Imgproc.COLOR_GRAY2RGBA);
@@ -144,8 +141,7 @@ public class DrowsinessDetector {
 		return cascadeMouthDetector;
 	}
 
-	public void setCascadeMouthDetector(
-			CascadeMouthDetector cascadeMouthDetector) {
+	public void setCascadeMouthDetector(CascadeMouthDetector cascadeMouthDetector) {
 		this.cascadeMouthDetector = cascadeMouthDetector;
 	}
 
@@ -189,10 +185,13 @@ public class DrowsinessDetector {
 		case 5:
 			isDetectMouth = isChosen;
 			break;
+		case 6:
+			isAdditionalEqualization = isChosen;
+			break;
 		}
 	}
-	
-	public void setAllDetectionElements(boolean value){
+
+	public void setAllDetectionElements(boolean value) {
 		isEqualizeHistogram = value;
 		isGaussianBlur = value;
 		isDetectFace = value;
@@ -249,4 +248,12 @@ public class DrowsinessDetector {
 		this.isDetectMouth = isDetectMouth;
 	}
 
+	public boolean isAdditionalEqualization() {
+		return isAdditionalEqualization;
+	}
+
+	public void setAdditionalEqualization(boolean isAdditionalEqualization) {
+		this.isAdditionalEqualization = isAdditionalEqualization;
+	}
+	
 }
