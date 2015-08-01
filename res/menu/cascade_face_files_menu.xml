@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/faceItem1" android:title="haarcascade_frontalface_alt_tree"></item>
     <item android:id="@+id/faceItem2" android:title="haarcascade_frontalface_alt"></item>
     <item android:id="@+id/faceItem3" android:title="haarcascade_frontalface_alt2"></item>
-    <item android:id="@+id/faceItem4" android:title="haarcascade_frontalface_default"></item>
-    <item android:id="@+id/faceItem5" android:title="haarcascade_profileface"></item>
     <item android:id="@+id/faceItem6" android:title="lbpcascade_frontalface"></item>
 </menu>

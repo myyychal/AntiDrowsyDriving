@@ -860,6 +860,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		Arrays.fill(checkedItems, true);
 		drowsinessDetector.setAllDetectionElements(true);
 		drowsinessDetector.setAdditionalEqualization(false);
+		drowsinessDetector.setAdditionalGauss(false);
 		checkedItems[checkedItems.length - 1] = false;
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override

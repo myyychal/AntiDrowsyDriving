@@ -1,5 +1,7 @@
 package com.mpanek.detection.main;
 
+import java.util.ArrayList;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
@@ -22,12 +24,14 @@ public class DrowsinessDetector {
 
 	ClaheAlgorithm claheAlgorithm;
 
-	final CharSequence[] items = { "Equalize histogram", "Gaussian blur", "Detect face", "Detect eyes", "Detect nose", "Detect mouth", "Additional equalization after face detection" };
+	final CharSequence[] items = { "Equalize histogram", "Gaussian blur", "Detect face", "Detect eyes", "Detect nose", "Detect mouth",
+			"Additional equalization after face detection", "Additional gaussian blur after face detection"};
 
 	private boolean isEqualizeHistogram = true;
 	private boolean isGaussianBlur = true;
 	private boolean isDetectFace = true;
 	private boolean isAdditionalEqualization = false;
+	private boolean isAdditionalGauss = false;
 	private boolean isDetectEyes = true;
 	private boolean isDetectNose = true;
 	private boolean isDetectMouth = true;
@@ -81,6 +85,9 @@ public class DrowsinessDetector {
 				ClaheAlgorithm claheAlgorithm = new ClaheAlgorithm();
 				claheAlgorithm.process(imgToFindWithROI);
 			}
+			if (isAdditionalGauss){
+				Imgproc.GaussianBlur(mGray, mGray, new Size(5, 5), 0);
+			}
 			
 			if (isDetectEyes) {
 				Rect foundFaceForEyes = foundFaceInDetection.clone();
@@ -113,6 +120,23 @@ public class DrowsinessDetector {
 			DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR);
 
 			DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR);
+			
+			ArrayList<Rect> allDetectedRects = new ArrayList<Rect>();
+			if (foundFaceInDetection != null){
+				allDetectedRects.add(foundFaceInDetection);
+			}
+			for (Rect eyeRect : eyes){
+				if (eyeRect != null){
+					allDetectedRects.add(eyeRect);
+				}
+			}
+			if (mouth != null){
+				allDetectedRects.add(mouth);
+			}
+			if (nose != null){
+				allDetectedRects.add(nose);
+			}
+			DrawingUtils.drawLinesFromRectanglesCentres(allDetectedRects.toArray(new Rect[allDetectedRects.size()]), mRgba, DrawingConstants.WHITE);
 
 		} else {
 			Imgproc.cvtColor(mGray, mRgba, Imgproc.COLOR_GRAY2RGBA);
@@ -188,6 +212,9 @@ public class DrowsinessDetector {
 		case 6:
 			isAdditionalEqualization = isChosen;
 			break;
+		case 7:
+			isAdditionalGauss = isChosen;
+			break;
 		}
 	}
 
@@ -254,6 +281,14 @@ public class DrowsinessDetector {
 
 	public void setAdditionalEqualization(boolean isAdditionalEqualization) {
 		this.isAdditionalEqualization = isAdditionalEqualization;
+	}
+
+	public boolean isAdditionalGauss() {
+		return isAdditionalGauss;
+	}
+
+	public void setAdditionalGauss(boolean isAdditionalGauss) {
+		this.isAdditionalGauss = isAdditionalGauss;
 	}
 	
 }

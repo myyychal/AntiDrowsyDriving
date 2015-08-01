@@ -53,5 +53,9 @@ public class VisualUtils {
 		Point br = rect.br();
 		return (br.x - tl.x)*(br.y - tl.y);
 	}
+	
+	public static Point getCentrePoint(Rect rect){
+		return new Point((rect.tl().x + rect.br().x)/2, (rect.tl().y + rect.br().y)/2);
+	}
 
 }

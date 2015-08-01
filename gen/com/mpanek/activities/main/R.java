@@ -49,20 +49,13 @@ containing a value of this type.
         public static final int clipLimitValueText=0x7f050010;
         public static final int custom_camera_view=0x7f050004;
         public static final int detectionFlagButton=0x7f050025;
-        public static final int eyesItem1=0x7f050037;
-        public static final int eyesItem2=0x7f050038;
-        public static final int eyesItem3=0x7f050039;
-        public static final int eyesItem4=0x7f05003a;
-        public static final int eyesItem5=0x7f05003b;
-        public static final int eyesItem6=0x7f05003c;
-        public static final int eyesItem7=0x7f05003d;
-        public static final int eyesItem8=0x7f05003e;
-        public static final int faceItem1=0x7f05003f;
-        public static final int faceItem2=0x7f050040;
-        public static final int faceItem3=0x7f050041;
-        public static final int faceItem4=0x7f050042;
-        public static final int faceItem5=0x7f050043;
-        public static final int faceItem6=0x7f050044;
+        public static final int eyesItem2=0x7f050037;
+        public static final int eyesItem6=0x7f050038;
+        public static final int eyesItem7=0x7f050039;
+        public static final int eyesItem8=0x7f05003a;
+        public static final int faceItem2=0x7f05003b;
+        public static final int faceItem3=0x7f05003c;
+        public static final int faceItem6=0x7f05003d;
         public static final int flagItem1=0x7f050033;
         public static final int flagItem2=0x7f050034;
         public static final int flagItem3=0x7f050035;
@@ -71,10 +64,10 @@ containing a value of this type.
         public static final int gaussCheckbox=0x7f050032;
         public static final int gaussSeekBar=0x7f05002f;
         public static final int gaussValueText=0x7f050031;
-        public static final int group1=0x7f050045;
+        public static final int group1=0x7f05003e;
         public static final int isFaceTrackingButton=0x7f050023;
-        public static final int item1=0x7f050046;
-        public static final int item2=0x7f050047;
+        public static final int item1=0x7f05003f;
+        public static final int item2=0x7f050040;
         public static final int mainLayout=0x7f050003;
         public static final int maxEyeSeekBar=0x7f05001f;
         public static final int maxEyeValueText=0x7f050021;
@@ -124,23 +117,15 @@ containing a value of this type.
     }
     public static final class raw {
         public static final int haarcascade_eye=0x7f040000;
-        public static final int haarcascade_eye_tree_eyeglasses=0x7f040001;
-        public static final int haarcascade_frontalface_alt=0x7f040002;
-        public static final int haarcascade_frontalface_alt2=0x7f040003;
-        public static final int haarcascade_frontalface_alt_tree=0x7f040004;
-        public static final int haarcascade_frontalface_default=0x7f040005;
-        public static final int haarcascade_lefteye_2splits=0x7f040006;
-        public static final int haarcascade_mcs_eyepair_big=0x7f040007;
-        public static final int haarcascade_mcs_eyepair_small=0x7f040008;
-        public static final int haarcascade_mcs_lefteye=0x7f040009;
-        public static final int haarcascade_mcs_mouth=0x7f04000a;
-        public static final int haarcascade_mcs_nose=0x7f04000b;
-        public static final int haarcascade_mcs_righteye=0x7f04000c;
-        public static final int haarcascade_profileface=0x7f04000d;
-        public static final int haarcascade_righteye_2splits=0x7f04000e;
-        public static final int haarcascade_smile=0x7f04000f;
-        public static final int lbpcascade_frontalface=0x7f040010;
-        public static final int lbpcascade_profileface=0x7f040011;
+        public static final int haarcascade_frontalface_alt=0x7f040001;
+        public static final int haarcascade_frontalface_alt2=0x7f040002;
+        public static final int haarcascade_mcs_lefteye=0x7f040003;
+        public static final int haarcascade_mcs_mouth=0x7f040004;
+        public static final int haarcascade_mcs_nose=0x7f040005;
+        public static final int haarcascade_mcs_righteye=0x7f040006;
+        public static final int haarcascade_righteye_2splits=0x7f040007;
+        public static final int haarcascade_smile=0x7f040008;
+        public static final int lbpcascade_frontalface=0x7f040009;
     }
     public static final class string {
         public static final int app_name=0x7f060000;
