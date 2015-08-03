@@ -35,6 +35,8 @@ public class DrowsinessDetector {
 	private boolean isDetectEyes = true;
 	private boolean isDetectNose = true;
 	private boolean isDetectMouth = true;
+	
+	int gaussianBlur = 5;
 
 	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
 			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector) {
@@ -60,7 +62,7 @@ public class DrowsinessDetector {
 			claheAlgorithm.process(mGray);
 		}
 		if (isGaussianBlur) {
-			Imgproc.GaussianBlur(mGray, mGray, new Size(5, 5), 0);
+			Imgproc.GaussianBlur(mGray, mGray, new Size(gaussianBlur, gaussianBlur), 0);
 		}
 		Rect foundFaceInDetection = new Rect(0, 0, mGray.width(), mGray.height());
 		if (isDetectFace) {
@@ -86,7 +88,7 @@ public class DrowsinessDetector {
 				claheAlgorithm.process(imgToFindWithROI);
 			}
 			if (isAdditionalGauss){
-				Imgproc.GaussianBlur(mGray, mGray, new Size(5, 5), 0);
+				Imgproc.GaussianBlur(mGray, mGray, new Size(gaussianBlur, gaussianBlur), 0);
 			}
 			
 			if (isDetectEyes) {
@@ -226,6 +228,20 @@ public class DrowsinessDetector {
 		isDetectNose = value;
 		isDetectMouth = value;
 	}
+	
+	public boolean[] getDetectionFlags(){
+		boolean[] checks = new boolean[8];
+		checks[0] = isEqualizeHistogram;
+		checks[1] = isGaussianBlur;
+		checks[2] = isDetectFace;
+		checks[3] = isDetectEyes;
+		checks[4] = isDetectNose;
+		checks[5] = isDetectMouth;
+		checks[6] = isAdditionalEqualization;
+		checks[7] = isAdditionalEqualization;
+		return checks;
+		
+	}
 
 	public boolean isEqualizeHistogram() {
 		return isEqualizeHistogram;
@@ -289,6 +305,14 @@ public class DrowsinessDetector {
 
 	public void setAdditionalGauss(boolean isAdditionalGauss) {
 		this.isAdditionalGauss = isAdditionalGauss;
+	}
+
+	public int getGaussianBlur() {
+		return gaussianBlur;
+	}
+
+	public void setGaussianBlur(int gaussianBlur) {
+		this.gaussianBlur = gaussianBlur;
 	}
 	
 }

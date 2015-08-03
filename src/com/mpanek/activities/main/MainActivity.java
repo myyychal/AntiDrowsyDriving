@@ -1,9 +1,10 @@
 package com.mpanek.activities.main;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
@@ -23,7 +24,6 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.Objdetect;
 import org.opencv.video.Video;
@@ -74,6 +74,7 @@ import com.mpanek.tasks.FaceDetectionAsyncTask;
 import com.mpanek.tasks.GaussBlurAsyncTask;
 import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.MathUtils;
+import com.mpanek.utils.VisualUtils;
 import com.mpanek.views.camera.CustomCameraView;
 
 public class MainActivity extends Activity implements CvCameraViewListener2 {
@@ -232,7 +233,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mCustomCameraView.setCameraIndex(mCameraId);
 		mCustomCameraView.setVisibility(SurfaceView.VISIBLE);
 		mCustomCameraView.setCvCameraViewListener(this);
-		
+
 		startOrientationListener();
 
 		claheAlgorithm = new ClaheAlgorithm();
@@ -253,6 +254,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		initVerticalSeekBars();
 
 		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
+
+		isRawDataExists(this);
 	}
 
 	private void startOrientationListener() {
@@ -289,7 +292,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public void onCameraViewStarted(int width, int height) {
-
 		mRgba = new Mat(height, width, CvType.CV_8UC4);
 		currentlyUsedFrame = new Mat();
 		mGray = new Mat(height, width, CvType.CV_8UC1);
@@ -337,7 +339,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-
 		mRgba = inputFrame.rgba();
 		mGray = inputFrame.gray();
 
@@ -475,12 +476,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			}
 			if (foundFace2 != null) {
 				DrawingUtils.drawRect(foundFace2, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
-				if (isMouthWithEyes) {
-					Rect[] eyes = cascadeEyesDetector.findEyes(currentlyUsedFrame, foundFace2);
-					DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR);
-				}
-				Rect mouth = cascadeMouthDetector.findMouth(currentlyUsedFrame, foundFace2);
+				Rect mouth = cascadeMouthDetector.findMouth(currentlyUsedFrame, foundFace2.clone());
 				DrawingUtils.drawRect(mouth, currentlyUsedFrame, DrawingConstants.MOUTH_RECT_COLOR);
+				if (isMouthWithEyes) {
+					Rect[] eyes = cascadeEyesDetector.findEyes(currentlyUsedFrame, foundFace2.clone());
+					DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR);
+					break;
+				}
+
 			}
 			break;
 
@@ -580,6 +583,99 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			CalculateOpticalFlow(mRgba.getNativeObjAddr(), currentlyUsedFrame.getNativeObjAddr());
 			break;
 
+		case ViewModesConstants.VIEW_MODE_STASM:
+
+			int[] points = FindFaceLandmarks(mGray.getNativeObjAddr());
+
+			if (points[0] > 0) {
+				Point pt;
+				for (int i = 0; i < points.length / 2; ++i) {
+					pt = new Point(points[i * 2], points[i * 2 + 1]);
+					Core.circle(currentlyUsedFrame, pt, 4, DrawingConstants.GREEN);
+				}
+			}
+			break;
+
+		case ViewModesConstants.VIEW_MODE_FIND_ALL:
+			Rect foundFaceInDetection = new Rect(0, 0, mGray.width(), mGray.height());
+			Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
+			double boundingMultiplier = 0.1;
+			boundingBox.x += boundingMultiplier * mGray.width();
+			boundingBox.width -= 2 * boundingMultiplier * mGray.width();
+			foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
+			if (foundFaceInDetection == null) {
+				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
+			}
+			if (foundFaceInDetection != null) {
+				Rect[] eyes = null;
+				Rect mouth = null;
+				Rect nose = null;
+
+				Rect foundFaceForEyes = foundFaceInDetection.clone();
+				eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes);
+				if (eyes == null || eyes.length == 0) {
+					eyes = cascadeEyesDetector.getLastFoundEyes();
+				}
+
+				Rect foundFaceForMouth = foundFaceInDetection.clone();
+				mouth = cascadeMouthDetector.findMouth(mGray, foundFaceForMouth);
+				if (mouth == null) {
+					mouth = cascadeMouthDetector.getLastFoundMouth();
+				}
+
+				Rect foundFaceForNose = foundFaceInDetection.clone();
+				nose = cascadeNoseDetector.findNose(mGray, foundFaceForNose);
+				if (nose == null) {
+					nose = cascadeNoseDetector.getLastFoundNose();
+				}
+				
+				ArrayList<Float> characteristicPoints = new ArrayList<Float>();
+				if (eyes != null && eyes.length > 0) {
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[0]).x);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[0]).y);
+					if (eyes.length == 2) {
+						characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[1]).x);
+						characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[1]).y);
+					}
+				}
+				if (nose != null) {
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(nose).x);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(nose).y);
+				}
+				if (mouth != null) {
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x-5);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x+5);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
+				}
+				float[] floatArray = new float[characteristicPoints.size()];
+				int iter = 0;
+				for (Float f : characteristicPoints) {
+					floatArray[iter++] = (f != null ? f : Float.NaN);
+				}
+				if (floatArray != null && floatArray.length == 10) {
+					int[] kpoints = AddFaceLandmarks(mGray.getNativeObjAddr(), floatArray);
+					if (kpoints[0] > 0) {
+						Point pt;
+						for (int i = 0; i < kpoints.length / 2; ++i) {
+							pt = new Point(kpoints[i * 2], kpoints[i * 2 + 1]);
+							Core.circle(mRgba, pt, 4, DrawingConstants.GREEN);
+						}
+					}
+				}
+
+				DrawingUtils.drawRect(foundFaceInDetection, mRgba, DrawingConstants.FACE_RECT_COLOR);
+
+				DrawingUtils.drawRects(eyes, mRgba, DrawingConstants.EYES_RECT_COLOR);
+
+				DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR);
+
+				DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR);
+				
+			}
+
+			break;
+
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
 			currentlyUsedFrame = drowsinessDetector.processDetection(mGray, mRgba);
 			break;
@@ -663,11 +759,20 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			case 5:
 				mViewMode = ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_CPP;
 				break;
+			case 6:
+				mViewMode = ViewModesConstants.VIEW_MODE_STASM;
+				break;
 			}
 		} else if (item.getGroupId() == 6) {
 			switch (item.getItemId()) {
 			case 0:
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA;
+				break;
+			}
+		} else if (item.getGroupId() == 7) {
+			switch (item.getItemId()) {
+			case 0:
+				mViewMode = ViewModesConstants.VIEW_MODE_FIND_ALL;
 				break;
 			}
 		}
@@ -721,7 +826,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
 				cascadeEyesDetector.setCascadeFileName(menuitem.getTitle().toString().concat(".xml"));
 				File faceFile = cascadeEyesDetector.prepare(is, cascadeDir);
-				if (faceFile.getName().contains("eyepair")){
+				if (faceFile.getName().contains("eyepair")) {
 					cascadeEyesDetector.setBothEyes(true);
 				} else {
 					cascadeEyesDetector.setBothEyes(false);
@@ -816,7 +921,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		SubMenu mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
 		SubMenu mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
 		menu.add(6, 0, Menu.NONE, "Find nose");
-		SubMenu mItemPreviewChooseCamera = menu.addSubMenu("Choose camera");
+		menu.add(7, 0, Menu.NONE, "Find all");
 		SubMenu mItemPreviewOtherMenu = menu.addSubMenu("Other");
 
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
@@ -842,6 +947,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewOtherMenu.add(5, 3, Menu.NONE, "Find corner Harris (Cpp)");
 		mItemPreviewOtherMenu.add(5, 4, Menu.NONE, "Optical flow (Java)");
 		mItemPreviewOtherMenu.add(5, 5, Menu.NONE, "Optical flow (Cpp)");
+		mItemPreviewOtherMenu.add(5, 6, Menu.NONE, "STASM");
 
 		return true;
 	}
@@ -856,12 +962,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Select algorithm elements");
 		CharSequence[] items = drowsinessDetector.getItems();
-		boolean[] checkedItems = new boolean[items.length];
-		Arrays.fill(checkedItems, true);
 		drowsinessDetector.setAllDetectionElements(true);
 		drowsinessDetector.setAdditionalEqualization(false);
 		drowsinessDetector.setAdditionalGauss(false);
-		checkedItems[checkedItems.length - 1] = false;
+		boolean[] checkedItems = drowsinessDetector.getDetectionFlags();
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
@@ -1244,8 +1348,50 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				}
 				gaussValueText.setText(String.valueOf(currentValue));
 				gaussSize = currentValue;
+				drowsinessDetector.setGaussianBlur(gaussSize);
 			}
 		});
+	}
+
+	private void isRawDataExists(Context context) {
+		try {
+			File internalDir = context.getDir("stasm", Context.MODE_PRIVATE);
+			Log.i(TAG, "files for stasm: " + internalDir.getAbsolutePath());
+			File frontalface_xml = new File(internalDir, "haarcascade_frontalface_alt2.xml");
+			File lefteye_xml = new File(internalDir, "haarcascade_mcs_lefteye.xml");
+			File righteye_xml = new File(internalDir, "haarcascade_mcs_righteye.xml");
+			File mounth_xml = new File(internalDir, "haarcascade_mcs_mouth.xml");
+
+			if (frontalface_xml.exists() && lefteye_xml.exists() && righteye_xml.exists() && mounth_xml.exists()) {
+				Log.i(TAG, "RawDataExists");
+			} else {
+				copyRawDataToInternal(context, R.raw.haarcascade_frontalface_alt2, frontalface_xml);
+				copyRawDataToInternal(context, R.raw.haarcascade_mcs_lefteye, lefteye_xml);
+				copyRawDataToInternal(context, R.raw.haarcascade_mcs_righteye, righteye_xml);
+				copyRawDataToInternal(context, R.raw.haarcascade_mcs_mouth, mounth_xml);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void copyRawDataToInternal(Context context, int id, File file) {
+		Log.i(TAG, "copyRawDataToInternal: " + file.toString());
+		try {
+			InputStream is = context.getResources().openRawResource(id);
+			FileOutputStream fos = new FileOutputStream(file);
+
+			int data;
+			byte[] buffer = new byte[4096];
+			while ((data = is.read(buffer)) != -1) {
+				fos.write(buffer, 0, data);
+			}
+			is.close();
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Log.i(TAG, "copyRawDataToInternal done");
 	}
 
 	public native void EqualizeHistogram(long matAddrGr);
@@ -1269,5 +1415,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	public native void FindCornerHarris(long matAddrGray, long matAddrDst);
 
 	public native void CalculateOpticalFlow(long matAddrSrc, long matAddrDst);
+
+	public native int[] FindFaceLandmarks(long matAddrGr);
+
+	public native int[] AddFaceLandmarks(long matAddrGr, float[] points);
 
 }

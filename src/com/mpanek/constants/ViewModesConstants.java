@@ -23,5 +23,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_OPTICAL_FLOW_CPP = 19;
 	public static final int VIEW_MODE_OPTICAL_FLOW_JAVA = 17;
 	public static final int VIEW_MODE_START_DROWSINESS_DETECTION = 20;
+	public static final int VIEW_MODE_STASM = 23;
+	public static final int VIEW_MODE_FIND_ALL = 24;
 
 }

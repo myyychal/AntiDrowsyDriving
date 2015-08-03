@@ -2,12 +2,9 @@ package com.mpanek.detection.face;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
-
-import android.util.Log;
 
 import com.mpanek.detection.CascadeDetector;
 import com.mpanek.utils.VisualUtils;

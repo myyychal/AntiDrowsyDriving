@@ -1,16 +1,10 @@
 package com.mpanek.tasks;
 
 import org.opencv.core.Mat;
-import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import com.mpanek.constants.DrawingConstants;
-import com.mpanek.utils.DrawingUtils;
-
 import android.os.AsyncTask;
-import android.util.Log;
-
 public class GaussBlurAsyncTask extends AsyncTask<Void, Void, Mat> {
 
 	private static final String TAG = "AntiDrowsyDriving::GaussBlurAsyncTask";

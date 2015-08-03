@@ -7,9 +7,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
 
-import com.mpanek.constants.DrawingConstants;
 import com.mpanek.detection.CascadeDetector;
-import com.mpanek.utils.DrawingUtils;
 import com.mpanek.utils.VisualUtils;
 
 public class CascadeNoseDetector extends CascadeDetector {
