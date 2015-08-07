@@ -30,38 +30,4 @@ using namespace cv;
 
 extern "C" {
 
-JNIEXPORT void JNICALL Java_com_mpanek_algorithms_ClaheAlgorithm_ApplyCLAHEExt(
-		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit, jdouble tileWidth,
-		jdouble tileHeight);
-
-JNIEXPORT void JNICALL Java_com_mpanek_algorithms_ClaheAlgorithm_ApplyCLAHEExt(
-		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit, jdouble tileWidth,
-		jdouble tileHeight) {
-	Mat *src = (Mat*) addrSrc;
-
-	Ptr<CLAHE> clahe = createCLAHE();
-	clahe->setClipLimit(clipLimit);
-	Size *tilesSize = new Size(tileWidth, tileHeight);
-	clahe->setTilesGridSize(*tilesSize);
-
-	if (src->channels() >= 3) {
-		Mat ycrcb;
-
-		cvtColor(*src, ycrcb, CV_RGB2YCrCb);
-
-		vector<Mat> channels;
-		split(ycrcb, channels);
-
-		clahe->apply((Mat) channels[0], (Mat) channels[0]);
-
-		merge(channels, ycrcb);
-
-		cvtColor(ycrcb, *src, CV_YCrCb2RGB);
-
-	} else {
-		clahe->apply(*src, *src);
-	}
-
-}
-
 }

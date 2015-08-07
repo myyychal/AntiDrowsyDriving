@@ -1,4 +1,4 @@
-package com.mpanek.detection.nose;
+package com.mpanek.detection.elements.nose;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -7,7 +7,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
 
-import com.mpanek.detection.CascadeDetector;
+import com.mpanek.detection.elements.CascadeDetector;
 import com.mpanek.utils.VisualUtils;
 
 public class CascadeNoseDetector extends CascadeDetector {

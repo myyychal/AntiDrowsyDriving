@@ -1,4 +1,4 @@
-package com.mpanek.detection;
+package com.mpanek.detection.elements;
 
 import java.io.File;
 import java.io.FileOutputStream;

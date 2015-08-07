@@ -1,4 +1,4 @@
-package com.mpanek.detection.eyes;
+package com.mpanek.detection.elements.eyes;
 
 import java.util.ArrayList;
 
@@ -11,7 +11,7 @@ import org.opencv.objdetect.Objdetect;
 
 import android.util.Log;
 
-import com.mpanek.detection.CascadeDetector;
+import com.mpanek.detection.elements.CascadeDetector;
 
 public class CascadeEyesDetector extends CascadeDetector {
 

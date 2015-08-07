@@ -50,14 +50,14 @@
             android:layout_row="2" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView1"
+            android:id="@+id/scaleFactorNameText"
             android:layout_column="0"
             android:layout_gravity="left"
             android:layout_row="1"
             android:text="scaleFactor" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView2"
+            android:id="@+id/minNeigbrsNameText"
             android:layout_column="1"
             android:layout_gravity="left"
             android:layout_row="1"
@@ -92,14 +92,14 @@
             android:layout_row="5" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView7"
+            android:id="@+id/clipLimitNameText"
             android:layout_column="0"
             android:layout_gravity="left"
             android:layout_row="4"
             android:text="clipLimit" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView8"
+            android:id="@+id/tilesSizeNameText"
             android:layout_column="1"
             android:layout_gravity="left"
             android:layout_row="4"
@@ -168,7 +168,7 @@
             android:layout_row="2" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView3"
+            android:id="@+id/minFaceNameText"
             android:layout_column="3"
             android:layout_gravity="right"
             android:layout_row="1"
@@ -176,6 +176,27 @@
 
         <TextView
             android:id="@+id/minFaceValueText"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="0"
+            android:text="0" />
+        
+        <android.widget.VerticalSeekBar
+            android:id="@+id/blockSizeSeekBar"
+            android:layout_height="80dp"
+            android:layout_column="3"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="2" />
+
+        <android.widget.VerticalTextView
+            android:id="@+id/blockSizeNameText"
+            android:layout_column="3"
+            android:layout_gravity="right"
+            android:layout_row="1"
+            android:text="blockSize" />
+
+        <TextView
+            android:id="@+id/blockSizeValueText"
             android:layout_column="3"
             android:layout_gravity="right"
             android:layout_row="0"
@@ -189,7 +210,7 @@
             android:layout_row="5" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView5"
+            android:id="@+id/minEyeNameText"
             android:layout_column="3"
             android:layout_gravity="right"
             android:layout_row="4"
@@ -210,7 +231,7 @@
             android:layout_row="2" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView4"
+            android:id="@+id/maxFaceNameText"
             android:layout_column="4"
             android:layout_gravity="right"
             android:layout_row="1"
@@ -218,6 +239,27 @@
 
         <TextView
             android:id="@+id/maxFaceValueText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="0"
+            android:text="0" />
+        
+        <android.widget.VerticalSeekBar
+            android:id="@+id/cSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="2" />
+
+        <android.widget.VerticalTextView
+            android:id="@+id/cNameText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="1"
+            android:text="C" />
+
+        <TextView
+            android:id="@+id/cValueText"
             android:layout_column="4"
             android:layout_gravity="right"
             android:layout_row="0"
@@ -231,7 +273,7 @@
             android:layout_row="5" />
 
         <android.widget.VerticalTextView
-            android:id="@+id/textView6"
+            android:id="@+id/maxEyeNameText"
             android:layout_column="4"
             android:layout_gravity="right"
             android:layout_row="4"
@@ -244,6 +286,27 @@
             android:layout_row="3"
             android:text="0" />
 
+       <android.widget.VerticalSeekBar
+            android:id="@+id/thresholdSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_gravity="right|fill_vertical"
+            android:layout_row="5" />
+
+        <android.widget.VerticalTextView
+            android:id="@+id/thresholdNameText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="4"
+            android:text="threshold" />
+
+        <TextView
+            android:id="@+id/thresholdValueText"
+            android:layout_column="4"
+            android:layout_gravity="right"
+            android:layout_row="3"
+            android:text="0" />
+        
         <Button
             android:id="@+id/rgbGrayButton"
             style="?android:attr/buttonStyleSmall"
@@ -317,7 +380,7 @@
                 android:layout_row="2" />
 
             <android.widget.VerticalTextView
-                android:id="@+id/textView9"
+                android:id="@+id/minObjectNameText"
                 android:layout_column="7"
                 android:layout_gravity="right"
                 android:layout_row="1"
@@ -338,7 +401,7 @@
                 android:layout_row="2" />
 
             <android.widget.VerticalTextView
-                android:id="@+id/textView10"
+                android:id="@+id/maxObjectNameText"
                 android:layout_column="6"
                 android:layout_gravity="right"
                 android:layout_row="1"
@@ -375,7 +438,7 @@
                 android:layout_row="2" />
                     
                                 <android.widget.VerticalTextView
-                android:id="@+id/textView11"
+                android:id="@+id/gaussNameText"
                 android:layout_column="0"
                 android:layout_gravity="top|left"
                 android:layout_row="1"
@@ -395,6 +458,15 @@
                 android:layout_column="0"
                 android:layout_gravity="left|bottom"
                 android:layout_row="1" />
+
+            <Button
+                android:id="@+id/showSeekBarsButton"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_column="5"
+                android:layout_gravity="left|bottom"
+                android:layout_row="2"
+                android:text="Show SeekBars" 
+                android:onClick="showSeekBars"/>
                     
         </GridLayout>
 

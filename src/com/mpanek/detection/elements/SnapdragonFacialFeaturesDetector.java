@@ -1,4 +1,4 @@
-package com.mpanek.detection;
+package com.mpanek.detection.elements;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.core.Core;

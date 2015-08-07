@@ -3,7 +3,7 @@ package com.mpanek.tasks;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
-import com.mpanek.detection.face.CascadeFaceDetector;
+import com.mpanek.detection.elements.face.CascadeFaceDetector;
 
 import android.os.AsyncTask;
 

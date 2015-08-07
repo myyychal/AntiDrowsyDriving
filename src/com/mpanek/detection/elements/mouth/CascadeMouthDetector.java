@@ -1,4 +1,4 @@
-package com.mpanek.detection.mouth;
+package com.mpanek.detection.elements.mouth;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -7,7 +7,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.objdetect.Objdetect;
 
-import com.mpanek.detection.CascadeDetector;
+import com.mpanek.detection.elements.CascadeDetector;
 
 public class CascadeMouthDetector extends CascadeDetector {
 
@@ -20,9 +20,9 @@ public class CascadeMouthDetector extends CascadeDetector {
 		TAG = "AntiDrowsyDriving::CascadeMouthDetector";
 		this.scaleFactor = 1.2f;
 		this.minNeighbours = 2;
-		this.mRelativeMinObjectSize = 0.2f;
+		this.mRelativeMinObjectSize = 0.1f;
 		this.mAbsoluteMinObjectSize = 0;
-		this.mRelativeMaxObjectSize = 0.5f;
+		this.mRelativeMaxObjectSize = 0.4f;
 		this.mAbsoluteMaxObjectSize = 0;
 		this.detectionFlag = Objdetect.CASCADE_DO_CANNY_PRUNING;
 	}

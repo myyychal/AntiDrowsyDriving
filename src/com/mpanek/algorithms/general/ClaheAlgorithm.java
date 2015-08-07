@@ -1,4 +1,4 @@
-package com.mpanek.algorithms;
+package com.mpanek.algorithms.general;
 
 import org.opencv.core.Mat;
 

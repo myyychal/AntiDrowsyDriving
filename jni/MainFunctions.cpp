@@ -84,28 +84,6 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindCornerHa
 JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_CalculateOpticalFlow(
 		JNIEnv*, jobject, jlong addrSrc, jlong addrDst);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_EqualizeHistogram(
-		JNIEnv*, jobject, jlong addrGray) {
-	Mat& inputFrame = *(Mat*) addrGray;
-	if (inputFrame.channels() >= 3) {
-		Mat ycrcb;
-
-		cvtColor(inputFrame, ycrcb, CV_RGB2YCrCb);
-
-		vector<Mat> channels;
-		split(ycrcb, channels);
-
-		equalizeHist((Mat) channels[0], (Mat) channels[0]);
-
-		merge(channels, ycrcb);
-
-		cvtColor(ycrcb, inputFrame, CV_YCrCb2RGB);
-
-	} else {
-		equalizeHist(inputFrame, inputFrame);
-	}
-}
-
 JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindFace(
 		JNIEnv* jEnv, jobject, jstring jFileName) {
 	const char* jnamestr = jEnv->GetStringUTFChars(jFileName, NULL);

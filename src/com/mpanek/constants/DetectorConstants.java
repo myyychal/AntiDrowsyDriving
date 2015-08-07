@@ -16,5 +16,15 @@ public class DetectorConstants {
 
 	public static final int MIN_GAUSS_SIZE = 1;
 	public static final int MAX_GAUSS_SIZE = 21;
+	
+	public static final int MIN_BLOCK_SIZE = 1;
+	public static final int MAX_BLOCK_SIZE = 101;
+	
+	public static final float MIN_C_SIZE = -2.0f;
+	public static final float MAX_C_SIZE = 2.0f;
+	
+	public static final int MIN_THRESHOLD = 0;
+	public static final int MAX_THRESHOLD = 255;
+			
 
 }

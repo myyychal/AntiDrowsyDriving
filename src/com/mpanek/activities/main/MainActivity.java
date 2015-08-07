@@ -5,8 +5,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -50,6 +55,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.RelativeLayout;
@@ -59,17 +65,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VerticalSeekBar;
 
-import com.mpanek.algorithms.ClaheAlgorithm;
+import com.mpanek.algorithms.general.BinarizationAlgorithm;
+import com.mpanek.algorithms.general.ClaheAlgorithm;
+import com.mpanek.algorithms.general.HistogramEqualizationAlgorithm;
+import com.mpanek.algorithms.specialized.DarkBrightRatioAlgorithm;
 import com.mpanek.constants.DetectorConstants;
 import com.mpanek.constants.DrawingConstants;
 import com.mpanek.constants.ViewModesConstants;
-import com.mpanek.detection.SnapdragonFacialFeaturesDetector;
-import com.mpanek.detection.eyes.CascadeEyesDetector;
-import com.mpanek.detection.face.CascadeFaceDetector;
-import com.mpanek.detection.face.ColorSegmentationFaceDetector;
+import com.mpanek.detection.elements.SnapdragonFacialFeaturesDetector;
+import com.mpanek.detection.elements.eyes.CascadeEyesDetector;
+import com.mpanek.detection.elements.face.CascadeFaceDetector;
+import com.mpanek.detection.elements.face.ColorSegmentationFaceDetector;
+import com.mpanek.detection.elements.mouth.CascadeMouthDetector;
+import com.mpanek.detection.elements.nose.CascadeNoseDetector;
 import com.mpanek.detection.main.DrowsinessDetector;
-import com.mpanek.detection.mouth.CascadeMouthDetector;
-import com.mpanek.detection.nose.CascadeNoseDetector;
 import com.mpanek.tasks.FaceDetectionAsyncTask;
 import com.mpanek.tasks.GaussBlurAsyncTask;
 import com.mpanek.utils.DrawingUtils;
@@ -91,6 +100,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	TextView minObjectValueText;
 	TextView maxObjectValueText;
 	TextView gaussValueText;
+	TextView blockSizeText;
+	TextView cText;
+	TextView thresholdText;
 
 	private VerticalSeekBar scaleFactorSeekBar;
 	private VerticalSeekBar minNeighsSeekBar;
@@ -103,6 +115,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private VerticalSeekBar clipLimitSeekBar;
 	private VerticalSeekBar tileSizeSeekBar;
 	private VerticalSeekBar gaussSeekBar;
+	private VerticalSeekBar blockSizeSeekBar;
+	private VerticalSeekBar cSeekBar;
+	private VerticalSeekBar thresholdSeekBar;
+	
+	Map<String, VerticalSeekBar> verticalSeekBars = new LinkedHashMap<String, VerticalSeekBar>(); 
+	Map<String, TextView> verticalSeekBarsTextValues = new LinkedHashMap<String, TextView>();
+	Map<String, TextView> verticalSeekBarsTextNames = new LinkedHashMap<String, TextView>();
 
 	private CheckBox gaussCheckbox;
 
@@ -129,7 +148,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private CustomCameraView mCustomCameraView;
 
+	BinarizationAlgorithm binarizationAlgorithm;
 	ClaheAlgorithm claheAlgorithm;
+	HistogramEqualizationAlgorithm histogramEqualizationAlgorithm;
+	DarkBrightRatioAlgorithm darkBrightRatioAlgorithm;
 
 	SnapdragonFacialFeaturesDetector snapdragonFacialFeaturesDetector;
 	CascadeFaceDetector cascadeFaceDetector;
@@ -137,6 +159,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	CascadeMouthDetector cascadeMouthDetector;
 	CascadeNoseDetector cascadeNoseDetector;
 	ColorSegmentationFaceDetector colorSegmentationFaceDetector;
+
+	CascadeEyesDetector cascadeLeftEyeDetector;
+	CascadeEyesDetector cascadeRightEyeDetector;
 
 	DrowsinessDetector drowsinessDetector;
 
@@ -176,6 +201,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				is = getResources().openRawResource(eyesResourceId);
 				File eyesFile = cascadeEyesDetector.prepare(is, cascadeDir);
 				PrepareFindEyes(eyesFile.getAbsolutePath());
+
+				eyesResourceId = getResources().getIdentifier("haarcascade_mcs_lefteye", "raw", getPackageName());
+				is = getResources().openRawResource(eyesResourceId);
+				eyesFile = cascadeLeftEyeDetector.prepare(is, cascadeDir);
+
+				eyesResourceId = getResources().getIdentifier("haarcascade_mcs_righteye", "raw", getPackageName());
+				is = getResources().openRawResource(eyesResourceId);
+				eyesFile = cascadeRightEyeDetector.prepare(is, cascadeDir);
 
 				int mouthResourceId = getResources().getIdentifier("haarcascade_mcs_mouth", "raw", getPackageName());
 				is = getResources().openRawResource(mouthResourceId);
@@ -236,7 +269,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		startOrientationListener();
 
+		binarizationAlgorithm = new BinarizationAlgorithm();
 		claheAlgorithm = new ClaheAlgorithm();
+		histogramEqualizationAlgorithm = new HistogramEqualizationAlgorithm();
+		darkBrightRatioAlgorithm = new DarkBrightRatioAlgorithm();
 
 		snapdragonFacialFeaturesDetector = new SnapdragonFacialFeaturesDetector(
 				((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(), TAG, mCameraId);
@@ -246,10 +282,16 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		cascadeMouthDetector = new CascadeMouthDetector();
 		cascadeNoseDetector = new CascadeNoseDetector();
 
+		cascadeLeftEyeDetector = new CascadeEyesDetector();
+		cascadeRightEyeDetector = new CascadeEyesDetector();
+
 		colorSegmentationFaceDetector = new ColorSegmentationFaceDetector();
 
 		drowsinessDetector = new DrowsinessDetector(cascadeFaceDetector, cascadeEyesDetector, cascadeMouthDetector, cascadeNoseDetector,
 				claheAlgorithm);
+		drowsinessDetector.setCascadeLeftEyeDetector(cascadeLeftEyeDetector);
+		drowsinessDetector.setCascadeRightEyeDetector(cascadeRightEyeDetector);
+		drowsinessDetector.setSeparateEyesDetection(true);
 
 		initVerticalSeekBars();
 
@@ -315,9 +357,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		cornersThis = new ArrayList<Point>();
 		cornersPrev = new ArrayList<Point>();
-		
-		android.hardware.Camera.Size resolution = mCustomCameraView.getCamera().new Size(640, 480);
-		mCustomCameraView.setResolution(resolution);
+
+		// android.hardware.Camera.Size resolution =
+		// mCustomCameraView.getCamera().new Size(640, 480);
+		// mCustomCameraView.setResolution(resolution);
 	}
 
 	public void onCameraViewStopped() {
@@ -385,7 +428,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			break;
 
 		case ViewModesConstants.VIEW_MODE_EQ_HIST_CPP:
-			EqualizeHistogram(currentlyUsedFrame.getNativeObjAddr());
+			histogramEqualizationAlgorithm.standardEqualizationCpp(currentlyUsedFrame);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_EQ_HIST_JAVA:
+			histogramEqualizationAlgorithm.standardEqualizationJava(currentlyUsedFrame);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP:
@@ -406,6 +453,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			Rect face = cascadeFaceDetector.findFace(currentlyUsedFrame);
 			if (face != null) {
 				DrawingUtils.drawRect(face, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
+				//Mat imgToFindWithROI = new Mat(currentlyUsedFrame, face);
+				//imgToFindWithROI.copyTo(currentlyUsedFrame.submat(0, imgToFindWithROI.height(), 0, imgToFindWithROI.width()));
 			}
 			break;
 
@@ -537,26 +586,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		case ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_JAVA:
 			if (mMOP2fptsPrev.rows() == 0) {
-
 				Imgproc.cvtColor(mRgba, matOpFlowThis, Imgproc.COLOR_RGBA2GRAY);
-
 				matOpFlowThis.copyTo(matOpFlowPrev);
-
 				Imgproc.goodFeaturesToTrack(matOpFlowPrev, MOPcorners, iGFFTMax, 0.05, 20);
 				mMOP2fptsPrev.fromArray(MOPcorners.toArray());
-
 				mMOP2fptsPrev.copyTo(mMOP2fptsSafe);
 			} else {
-
 				matOpFlowThis.copyTo(matOpFlowPrev);
-
 				Imgproc.cvtColor(mRgba, matOpFlowThis, Imgproc.COLOR_RGBA2GRAY);
-
 				Imgproc.goodFeaturesToTrack(matOpFlowThis, MOPcorners, iGFFTMax, 0.05, 20);
 				mMOP2fptsThis.fromArray(MOPcorners.toArray());
-
 				mMOP2fptsSafe.copyTo(mMOP2fptsPrev);
-
 				mMOP2fptsThis.copyTo(mMOP2fptsSafe);
 			}
 
@@ -628,7 +668,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				if (nose == null) {
 					nose = cascadeNoseDetector.getLastFoundNose();
 				}
-				
+
 				ArrayList<Float> characteristicPoints = new ArrayList<Float>();
 				if (eyes != null && eyes.length > 0) {
 					characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[0]).x);
@@ -643,9 +683,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 					characteristicPoints.add((float) VisualUtils.getCentrePoint(nose).y);
 				}
 				if (mouth != null) {
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x-5);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x - 5);
 					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x+5);
+					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x + 5);
 					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
 				}
 				float[] floatArray = new float[characteristicPoints.size()];
@@ -665,17 +705,34 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				}
 
 				DrawingUtils.drawRect(foundFaceInDetection, mRgba, DrawingConstants.FACE_RECT_COLOR);
-
 				DrawingUtils.drawRects(eyes, mRgba, DrawingConstants.EYES_RECT_COLOR);
-
 				DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR);
-
 				DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR);
-				
 			}
 
 			break;
+			
+		case ViewModesConstants.VIEW_MODE_BIN_STANDARD:
+			binarizationAlgorithm.standardBinarization(currentlyUsedFrame);
+			break;
 
+		case ViewModesConstants.VIEW_MODE_BIN_STANDARD_TRUNC:
+			binarizationAlgorithm.standardTruncBinarization(currentlyUsedFrame);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_BIN_OTSU:
+			binarizationAlgorithm.otsuBinarization(currentlyUsedFrame);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_BIN_ADAPTIVE_MEAN:
+			binarizationAlgorithm.adaptiveMeanBinarization(currentlyUsedFrame);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_BIN_ADAPTIVE_GAUSSIAN:
+			binarizationAlgorithm.adaptiveGaussianBinarization(currentlyUsedFrame);
+			break;
+
+			
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
 			currentlyUsedFrame = drowsinessDetector.processDetection(mGray, mRgba);
 			break;
@@ -686,36 +743,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	}
 
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (item.getGroupId() == 1) {
-			switch (item.getItemId()) {
-			case 0:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_SNAPDRAGON;
-				break;
-			case 1:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA;
-				break;
-			case 2:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP;
-				break;
-			case 3:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA_ASYNC_TASK;
-				break;
-			case 4:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA;
-				break;
-			case 5:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP;
-				break;
-			}
-		} else if (item.getGroupId() == 2) {
-			switch (item.getItemId()) {
-			case 0:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_JAVA;
-				break;
-			case 1:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_CPP;
-				break;
-			}
+		if (item.getGroupId() == 4) {
+			mEqHistMode = MainActivityHelper.getHistMode(item);
 		} else if (item.getGroupId() == 3) {
 			switch (item.getItemId()) {
 			case 0:
@@ -727,54 +756,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				isMouthWithEyes = true;
 				break;
 			}
-		} else if (item.getGroupId() == 4) {
-			switch (item.getItemId()) {
-			case 0:
-				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_NONE;
-				break;
-			case 1:
-				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_HIST_CPP;
-				break;
-			case 2:
-				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP;
-				break;
-			}
-		} else if (item.getGroupId() == 5) {
-			switch (item.getItemId()) {
-			case 0:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_JAVA;
-				break;
-			case 1:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_GOOD_FEATURES_TO_TRACK_CPP;
-				break;
-			case 2:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_JAVA;
-				break;
-			case 3:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_CORNER_HARRIS_CPP;
-				break;
-			case 4:
-				mViewMode = ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_JAVA;
-				break;
-			case 5:
-				mViewMode = ViewModesConstants.VIEW_MODE_OPTICAL_FLOW_CPP;
-				break;
-			case 6:
-				mViewMode = ViewModesConstants.VIEW_MODE_STASM;
-				break;
-			}
-		} else if (item.getGroupId() == 6) {
-			switch (item.getItemId()) {
-			case 0:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_NOSE_CASCADE_JAVA;
-				break;
-			}
-		} else if (item.getGroupId() == 7) {
-			switch (item.getItemId()) {
-			case 0:
-				mViewMode = ViewModesConstants.VIEW_MODE_FIND_ALL;
-				break;
-			}
+		} else {
+			mViewMode = MainActivityHelper.getViewMode(item);
 		}
 		return true;
 	}
@@ -916,12 +899,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		Log.i(TAG, "called onCreateOptionsMenu");
-		SubMenu mItemPreviewEqHistMenu = menu.addSubMenu("Equalize histogram");
 		SubMenu mItemPreviewFindFaceMenu = menu.addSubMenu("Find face");
 		SubMenu mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
 		SubMenu mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
 		menu.add(6, 0, Menu.NONE, "Find nose");
 		menu.add(7, 0, Menu.NONE, "Find all");
+		SubMenu mItemPreviewEqHistMenu = menu.addSubMenu("Equalize histogram");
+		SubMenu mItemPreviewBinarizationMenu = menu.addSubMenu("Binarization");
 		SubMenu mItemPreviewOtherMenu = menu.addSubMenu("Other");
 
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
@@ -938,8 +922,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewFindMouthMenu.add(3, 1, Menu.NONE, "With eyes");
 
 		mItemPreviewEqHistMenu.add(4, 0, Menu.NONE, "None");
-		mItemPreviewEqHistMenu.add(4, 1, Menu.NONE, "Standard");
-		mItemPreviewEqHistMenu.add(4, 2, Menu.NONE, "CLAHE");
+		mItemPreviewEqHistMenu.add(4, 1, Menu.NONE, "Standard (Java)");
+		mItemPreviewEqHistMenu.add(4, 2, Menu.NONE, "Standard (Cpp)");
+		mItemPreviewEqHistMenu.add(4, 3, Menu.NONE, "CLAHE");
 
 		mItemPreviewOtherMenu.add(5, 0, Menu.NONE, "Find features (Java)");
 		mItemPreviewOtherMenu.add(5, 1, Menu.NONE, "Find features (Cpp)");
@@ -948,6 +933,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewOtherMenu.add(5, 4, Menu.NONE, "Optical flow (Java)");
 		mItemPreviewOtherMenu.add(5, 5, Menu.NONE, "Optical flow (Cpp)");
 		mItemPreviewOtherMenu.add(5, 6, Menu.NONE, "STASM");
+
+		mItemPreviewBinarizationMenu.add(8, 0, Menu.NONE, "Standard");
+		mItemPreviewBinarizationMenu.add(8, 1, Menu.NONE, "Standard (trunc)");
+		mItemPreviewBinarizationMenu.add(8, 2, Menu.NONE, "Otsu");
+		mItemPreviewBinarizationMenu.add(8, 3, Menu.NONE, "Adaptive mean");
+		mItemPreviewBinarizationMenu.add(8, 4, Menu.NONE, "Adaptive gaussian");
 
 		return true;
 	}
@@ -975,7 +966,29 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		builder.setPositiveButton("Ok", new OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				mViewMode = ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION;
+				AlertDialog dialog1;
+				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				builder.setTitle("Select eyes detection algorithm");
+				CharSequence[] algorithms = new CharSequence[] { "Pair of eyes", "Separate eyes" };
+				builder.setSingleChoiceItems(algorithms, 0, new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						if (arg1 == 0) {
+							drowsinessDetector.setSeparateEyesDetection(false);
+						} else {
+							drowsinessDetector.setSeparateEyesDetection(true);
+						}
+					}
+				});
+				builder.setPositiveButton("Ok", new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						mViewMode = ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION;
+					}
+				});
+				dialog1 = builder.create();
+				dialog1.show();
+
 			}
 		});
 		dialog = builder.create();
@@ -1043,11 +1056,84 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 		popup.show();
 	}
+	
+	public void showSeekBars(View v){
+		AlertDialog dialog;
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Select visible seek bars");
+		ArrayList<String> seekBarsStrings = new ArrayList<String>();
+		seekBarsStrings.addAll(verticalSeekBars.keySet());
+		final CharSequence[] items = seekBarsStrings.toArray(new CharSequence[seekBarsStrings.size()]);
+		final boolean[] checkedItems = {true, true, true, true, true, true, true, true, true, true, true, false, false, false};
+		final Set<String> firstGroup = new HashSet<String>(Arrays.asList("minFace", "maxFace", "minEye", "maxEye"));
+		final Set<String> secondGroup = new HashSet<String>(Arrays.asList("blockSize", "C", "threshold"));
+		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
+			@Override
+			public void onClick(DialogInterface insideDialog, int indexSelected, boolean isChecked) {
+				CharSequence itemTitle = items[indexSelected];
+				if (isChecked){
+					verticalSeekBars.get(itemTitle).setVisibility(View.VISIBLE);
+					verticalSeekBarsTextNames.get(itemTitle).setVisibility(View.VISIBLE);
+					verticalSeekBarsTextValues.get(itemTitle).setVisibility(View.VISIBLE);
+					if (firstGroup.contains(itemTitle)){
+						for (String itemToHide : secondGroup){
+							verticalSeekBars.get(itemToHide).setVisibility(View.INVISIBLE);
+							verticalSeekBarsTextNames.get(itemToHide).setVisibility(View.INVISIBLE);
+							verticalSeekBarsTextValues.get(itemToHide).setVisibility(View.INVISIBLE);
+						}
+						checkedItems[11] = false;
+						checkedItems[12] = false;
+						checkedItems[13] = false;
+					} else if (secondGroup.contains(itemTitle)){
+						for (String itemToHide : firstGroup){
+							verticalSeekBars.get(itemToHide).setVisibility(View.INVISIBLE);
+							verticalSeekBarsTextNames.get(itemToHide).setVisibility(View.INVISIBLE);
+							verticalSeekBarsTextValues.get(itemToHide).setVisibility(View.INVISIBLE);
+						}
+						checkedItems[2] = false;
+						checkedItems[3] = false;
+						checkedItems[4] = false;
+						checkedItems[5] = false;
+					}
+				} else {
+					verticalSeekBars.get(itemTitle).setVisibility(View.INVISIBLE);
+					verticalSeekBarsTextNames.get(itemTitle).setVisibility(View.INVISIBLE);
+					verticalSeekBarsTextValues.get(itemTitle).setVisibility(View.INVISIBLE);
+					if (firstGroup.contains(itemTitle)){
+						for (String itemToHide : secondGroup){
+							verticalSeekBars.get(itemToHide).setVisibility(View.VISIBLE);	
+							verticalSeekBarsTextNames.get(itemToHide).setVisibility(View.VISIBLE);
+							verticalSeekBarsTextValues.get(itemToHide).setVisibility(View.VISIBLE);
+						}
+						checkedItems[11] = true;
+						checkedItems[12] = true;
+						checkedItems[13] = true;
+					} else if (secondGroup.contains(itemTitle)){
+						for (String itemToHide : firstGroup){
+							verticalSeekBars.get(itemToHide).setVisibility(View.VISIBLE);
+							verticalSeekBarsTextNames.get(itemToHide).setVisibility(View.VISIBLE);
+							verticalSeekBarsTextValues.get(itemToHide).setVisibility(View.VISIBLE);
+						}
+						checkedItems[2] = true;
+						checkedItems[3] = true;
+						checkedItems[4] = true;
+						checkedItems[5] = true;
+					}
+				}
+
+			}
+		});
+		dialog = builder.create();
+		dialog.show();
+	}
 
 	public void initVerticalSeekBars() {
 
 		scaleFactorSeekBar = (VerticalSeekBar) findViewById(R.id.scaleFactorSeekBar);
+		verticalSeekBars.put("scaleFactor", scaleFactorSeekBar);
 		scaleFactorValueText = (TextView) findViewById(R.id.scaleFactorValueText);
+		verticalSeekBarsTextValues.put("scaleFactor", scaleFactorValueText);
+		verticalSeekBarsTextNames.put("scaleFactor", (TextView)findViewById(R.id.scaleFactorNameText));
 		scaleFactorValueText.setText(String.valueOf(cascadeFaceDetector.getScaleFactor()));
 		scaleFactorSeekBar.setProgress((int) ((cascadeFaceDetector.getScaleFactor() / DetectorConstants.MAX_SCALE_FACTOR) * 100));
 		scaleFactorSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1077,7 +1163,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		minNeighsSeekBar = (VerticalSeekBar) findViewById(R.id.minNeighsSeekBar);
+		verticalSeekBars.put("minNeighs", minNeighsSeekBar);
 		minNeighsValueText = (TextView) findViewById(R.id.minNeighboursValueText);
+		verticalSeekBarsTextValues.put("minNeighs", minNeighsValueText);
+		verticalSeekBarsTextNames.put("minNeighs", (TextView)findViewById(R.id.minNeigbrsNameText));
 		minNeighsValueText.setText(String.valueOf(cascadeFaceDetector.getMinNeighbours()));
 		minNeighsSeekBar.setProgress(cascadeFaceDetector.getMinNeighbours() * 100 / DetectorConstants.MAX_MIN_NEIGHBOURS);
 		minNeighsSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1107,7 +1196,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		minFaceSeekBar = (VerticalSeekBar) findViewById(R.id.minFaceSeekBar);
+		verticalSeekBars.put("minFace", minFaceSeekBar);
 		minFaceValueText = (TextView) findViewById(R.id.minFaceValueText);
+		verticalSeekBarsTextValues.put("minFace", minFaceValueText);
+		verticalSeekBarsTextNames.put("minFace", (TextView)findViewById(R.id.minFaceNameText));
 		minFaceValueText.setText(String.valueOf(cascadeFaceDetector.getmRelativeMinObjectSize()));
 		minFaceSeekBar.setProgress((int) (cascadeFaceDetector.getmRelativeMinObjectSize() * 100));
 		minFaceSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1133,7 +1225,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		maxFaceSeekBar = (VerticalSeekBar) findViewById(R.id.maxFaceSeekBar);
+		verticalSeekBars.put("maxFace", maxFaceSeekBar);
 		maxFaceValueText = (TextView) findViewById(R.id.maxFaceValueText);
+		verticalSeekBarsTextValues.put("maxFace", maxFaceValueText);
+		verticalSeekBarsTextNames.put("maxFace", (TextView)findViewById(R.id.maxFaceNameText));
 		maxFaceValueText.setText(String.valueOf(cascadeFaceDetector.getmRelativeMaxObjectSize()));
 		maxFaceSeekBar.setProgress((int) (cascadeFaceDetector.getmRelativeMaxObjectSize() * 100));
 		maxFaceSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1159,7 +1254,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		minEyeSeekBar = (VerticalSeekBar) findViewById(R.id.minEyeSeekBar);
+		verticalSeekBars.put("minEye", minEyeSeekBar);
 		minEyeValueText = (TextView) findViewById(R.id.minEyeValueText);
+		verticalSeekBarsTextValues.put("minEye", minEyeValueText);
+		verticalSeekBarsTextNames.put("minEye", (TextView)findViewById(R.id.minEyeNameText));
 		minEyeValueText.setText(String.valueOf(cascadeEyesDetector.getmRelativeMinObjectSize()));
 		minEyeSeekBar.setProgress((int) (cascadeEyesDetector.getmRelativeMinObjectSize() * 100));
 		minEyeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1185,7 +1283,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		maxEyeSeekBar = (VerticalSeekBar) findViewById(R.id.maxEyeSeekBar);
+		verticalSeekBars.put("maxEye", maxEyeSeekBar);
 		maxEyeValueText = (TextView) findViewById(R.id.maxEyeValueText);
+		verticalSeekBarsTextValues.put("maxEye", maxEyeValueText);
+		verticalSeekBarsTextNames.put("maxEye", (TextView)findViewById(R.id.maxEyeNameText));
 		maxEyeValueText.setText(String.valueOf(cascadeEyesDetector.getmRelativeMaxObjectSize()));
 		maxEyeSeekBar.setProgress((int) (cascadeEyesDetector.getmRelativeMaxObjectSize() * 100));
 		maxEyeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1211,7 +1312,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		minObjectSeekBar = (VerticalSeekBar) findViewById(R.id.minObjectSeekBar);
+		verticalSeekBars.put("minObject", minObjectSeekBar);
 		minObjectValueText = (TextView) findViewById(R.id.minObjectValueText);
+		verticalSeekBarsTextValues.put("minObject", minObjectValueText);
+		verticalSeekBarsTextNames.put("minObject", (TextView)findViewById(R.id.minObjectNameText));
 		if (isMouthChosen) {
 			minObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMinObjectSize()));
 			minObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMinObjectSize() * 100));
@@ -1247,7 +1351,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		maxObjectSeekBar = (VerticalSeekBar) findViewById(R.id.maxObjectSeekBar);
+		verticalSeekBars.put("maxObject", maxObjectSeekBar);
 		maxObjectValueText = (TextView) findViewById(R.id.maxObjectValueText);
+		verticalSeekBarsTextValues.put("maxObject", maxObjectValueText);
+		verticalSeekBarsTextNames.put("maxObject", (TextView)findViewById(R.id.maxObjectNameText));
 		if (isMouthChosen) {
 			maxObjectValueText.setText(String.valueOf(cascadeMouthDetector.getmRelativeMaxObjectSize()));
 			maxObjectSeekBar.setProgress((int) (cascadeMouthDetector.getmRelativeMaxObjectSize() * 100));
@@ -1283,7 +1390,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		clipLimitSeekBar = (VerticalSeekBar) findViewById(R.id.clipLimitSeekBar);
+		verticalSeekBars.put("clipLimit", clipLimitSeekBar);
 		clipLimitValueText = (TextView) findViewById(R.id.clipLimitValueText);
+		verticalSeekBarsTextValues.put("clipLimit", clipLimitValueText);
+		verticalSeekBarsTextNames.put("clipLimit", (TextView)findViewById(R.id.clipLimitNameText));
 		clipLimitValueText.setText(String.valueOf(claheAlgorithm.getCurrentClipLimit()));
 		clipLimitSeekBar.setProgress((int) (claheAlgorithm.getCurrentClipLimit() * 100 / DetectorConstants.MAX_CLIP_LIMIT));
 		clipLimitSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1305,7 +1415,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		tileSizeSeekBar = (VerticalSeekBar) findViewById(R.id.tilesSizeSeekBar);
+		verticalSeekBars.put("tileSize", tileSizeSeekBar);
 		tileSizeValueText = (TextView) findViewById(R.id.tilesSizeValueText);
+		verticalSeekBarsTextValues.put("tileSize", tileSizeValueText);
+		verticalSeekBarsTextNames.put("tileSize", (TextView)findViewById(R.id.tilesSizeNameText));
 		tileSizeValueText.setText(String.valueOf(claheAlgorithm.getCurrentTileSize()));
 		tileSizeSeekBar.setProgress((int) (claheAlgorithm.getCurrentTileSize() * 100 / DetectorConstants.MAX_TILE_SIZE));
 		tileSizeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1327,7 +1440,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 
 		gaussSeekBar = (VerticalSeekBar) findViewById(R.id.gaussSeekBar);
+		verticalSeekBars.put("gaussSize", gaussSeekBar);
 		gaussValueText = (TextView) findViewById(R.id.gaussValueText);
+		verticalSeekBarsTextValues.put("gaussSize", gaussValueText);
+		verticalSeekBarsTextNames.put("gaussSize", (TextView)findViewById(R.id.gaussNameText));
 		gaussValueText.setText(String.valueOf(gaussSize));
 		gaussSeekBar.setProgress((int) (gaussSize * 100 / DetectorConstants.MAX_GAUSS_SIZE));
 		gaussSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -1349,6 +1465,89 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				gaussValueText.setText(String.valueOf(currentValue));
 				gaussSize = currentValue;
 				drowsinessDetector.setGaussianBlur(gaussSize);
+			}
+		});
+		
+		blockSizeSeekBar = (VerticalSeekBar) findViewById(R.id.blockSizeSeekBar);
+		blockSizeSeekBar.setVisibility(View.INVISIBLE);
+		verticalSeekBars.put("blockSize", blockSizeSeekBar);
+		blockSizeText = (TextView) findViewById(R.id.blockSizeValueText);
+		blockSizeText.setVisibility(View.INVISIBLE);
+		verticalSeekBarsTextValues.put("blockSize", blockSizeText);
+		verticalSeekBarsTextNames.put("blockSize", (TextView)findViewById(R.id.blockSizeNameText));
+		findViewById(R.id.blockSizeNameText).setVisibility(View.INVISIBLE);
+		blockSizeText.setText(String.valueOf(binarizationAlgorithm.getBlockSize()));
+		blockSizeSeekBar.setProgress((int) (binarizationAlgorithm.getBlockSize() * 100 / DetectorConstants.MAX_BLOCK_SIZE));
+		blockSizeSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_BLOCK_SIZE - DetectorConstants.MIN_BLOCK_SIZE)) / 100)
+						+ DetectorConstants.MIN_BLOCK_SIZE;
+				if (currentValue % 2 == 0) {
+					currentValue += 1;
+				}
+				blockSizeText.setText(String.valueOf(currentValue));
+				binarizationAlgorithm.setBlockSize(currentValue);
+			}
+		});
+		
+		cSeekBar = (VerticalSeekBar) findViewById(R.id.cSeekBar);
+		cSeekBar.setVisibility(View.INVISIBLE);
+		verticalSeekBars.put("C", cSeekBar);
+		cText = (TextView) findViewById(R.id.cValueText);
+		cText.setVisibility(View.INVISIBLE);
+		verticalSeekBarsTextValues.put("C", cText);
+		verticalSeekBarsTextNames.put("C", (TextView)findViewById(R.id.cNameText));
+		findViewById(R.id.cNameText).setVisibility(View.INVISIBLE);
+		cText.setText(String.valueOf(binarizationAlgorithm.getC()));
+		cSeekBar.setProgress((int) (Math.abs(binarizationAlgorithm.getC())/(DetectorConstants.MAX_C_SIZE - DetectorConstants.MIN_C_SIZE))*100);
+		cSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float currentValue = (float) (((progress * (DetectorConstants.MAX_C_SIZE - DetectorConstants.MIN_C_SIZE)) / 100.0)
+						+ DetectorConstants.MIN_C_SIZE);
+				cText.setText(String.valueOf(currentValue));
+				binarizationAlgorithm.setC(currentValue);
+			}
+		});
+		
+		thresholdSeekBar = (VerticalSeekBar) findViewById(R.id.thresholdSeekBar);
+		thresholdSeekBar.setVisibility(View.INVISIBLE);
+		verticalSeekBars.put("threshold", thresholdSeekBar);
+		thresholdText = (TextView) findViewById(R.id.thresholdValueText);
+		thresholdText.setVisibility(View.INVISIBLE);
+		verticalSeekBarsTextValues.put("threshold", thresholdText);
+		verticalSeekBarsTextNames.put("threshold", (TextView)findViewById(R.id.thresholdNameText));
+		findViewById(R.id.thresholdNameText).setVisibility(View.INVISIBLE);
+		thresholdText.setText(String.valueOf(binarizationAlgorithm.getThreshold()));
+		thresholdSeekBar.setProgress((int) (binarizationAlgorithm.getThreshold() * 100 / DetectorConstants.MAX_THRESHOLD));
+		thresholdSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				int currentValue = ((progress * (DetectorConstants.MAX_THRESHOLD - DetectorConstants.MIN_THRESHOLD)) / 100)
+						+ DetectorConstants.MIN_THRESHOLD;
+				thresholdText.setText(String.valueOf(currentValue));
+				binarizationAlgorithm.setThreshold(currentValue);
 			}
 		});
 	}
@@ -1393,8 +1592,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		}
 		Log.i(TAG, "copyRawDataToInternal done");
 	}
-
-	public native void EqualizeHistogram(long matAddrGr);
 
 	public native void FindFace(long matAddrGr, long matAddrRgba);
 
