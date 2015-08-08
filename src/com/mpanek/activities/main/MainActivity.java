@@ -729,7 +729,23 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_CANNY_EDGE:
 			edgeDetectionAlgorithm.cannyEdgeDetection(currentlyUsedFrame);
 			break;
+			
+		case ViewModesConstants.VIEW_MODE_SOBEL_EDGE:
+			edgeDetectionAlgorithm.sobelEdgeDetection(currentlyUsedFrame);
+			break;
+			
+		case ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE:
+			edgeDetectionAlgorithm.laplacianEdgeDetection(currentlyUsedFrame);
+			break;
 
+		case ViewModesConstants.VIEW_MODE_SOBEL_EDGE_ADVANCED:
+			edgeDetectionAlgorithm.sobelAdvancedEdgeDetection(currentlyUsedFrame);
+			break;
+			
+		case ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE_ADVANCED:
+			edgeDetectionAlgorithm.laplacianAdvancedEdgeDetection(currentlyUsedFrame);
+			break;
+			
 		case ViewModesConstants.VIEW_MODE_BIN_STANDARD:
 			binarizationAlgorithm.standardBinarization(currentlyUsedFrame);
 			break;
@@ -857,15 +873,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 				@Override
 				public boolean onMenuItemClick(MenuItem item) {
-					int currentViewMode = mViewMode;
-					mViewMode = ViewModesConstants.VIEW_MODE_NONE;
 					int id = item.getItemId();
 					android.hardware.Camera.Size resolution = mResolutionList.get(id);
 					mCustomCameraView.setResolution(resolution);
 					resolution = mCustomCameraView.getResolution();
 					String caption = Integer.valueOf(resolution.width).toString() + "x" + Integer.valueOf(resolution.height).toString();
 					Toast.makeText(getBaseContext(), caption, Toast.LENGTH_SHORT).show();
-					mViewMode = currentViewMode;
 					return false;
 				}
 			});
@@ -923,6 +936,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		menu.add(7, 0, Menu.NONE, "Find all");
 		SubMenu mItemPreviewEqHistMenu = menu.addSubMenu("Equalize histogram");
 		SubMenu mItemPreviewBinarizationMenu = menu.addSubMenu("Binarization");
+		SubMenu mItemPreviewEdgeDetectionMenu = menu.addSubMenu("Edge detection");
 		SubMenu mItemPreviewOtherMenu = menu.addSubMenu("Other");
 
 		mItemPreviewFindFaceMenu.add(1, 0, Menu.NONE, "Snapdragon");
@@ -942,8 +956,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewEqHistMenu.add(4, 1, Menu.NONE, "Standard (Java)");
 		mItemPreviewEqHistMenu.add(4, 2, Menu.NONE, "Standard (Cpp)");
 		mItemPreviewEqHistMenu.add(4, 3, Menu.NONE, "CLAHE");
-
-		mItemPreviewOtherMenu.add(5, 7, Menu.NONE, "Canny");
+		
+		mItemPreviewEdgeDetectionMenu.add(9, 0, Menu.NONE, "Canny");
+		mItemPreviewEdgeDetectionMenu.add(9, 1, Menu.NONE, "Sobel");
+		mItemPreviewEdgeDetectionMenu.add(9, 2, Menu.NONE, "Laplacian");
+		mItemPreviewEdgeDetectionMenu.add(9, 3, Menu.NONE, "Sobel (advanced)");
+		mItemPreviewEdgeDetectionMenu.add(9, 4, Menu.NONE, "Laplacian (advanced)");
+		
 		mItemPreviewOtherMenu.add(5, 0, Menu.NONE, "Find features (Java)");
 		mItemPreviewOtherMenu.add(5, 1, Menu.NONE, "Find features (Cpp)");
 		mItemPreviewOtherMenu.add(5, 2, Menu.NONE, "Find corner Harris (Java)");
@@ -971,9 +990,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Select algorithm elements");
 		CharSequence[] items = drowsinessDetector.getItems();
-		// drowsinessDetector.setAllDetectionElements(true);
-		// drowsinessDetector.setAdditionalEqualization(false);
-		// drowsinessDetector.setAdditionalGauss(false);
 		boolean[] checkedItems = drowsinessDetector.getDetectionFlags();
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override
@@ -1005,10 +1021,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						AlertDialog dialog2;
 						AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 						builder.setTitle("Select eye openess algorithm");
-						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization","DarkBright - simple binarization", "Edge detection", "Do nothing" };
+						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization","DarkBright - simple binarization", "Edge detection - Canny", "Edge detection - Laplacian", "Do nothing" };
 						drowsinessDetector.setCannyAlgorithmUsed(false);
 						drowsinessDetector.setDoNothing(false);
 						drowsinessDetector.setSimpleBinarizationUsed(false);
+						drowsinessDetector.setSobelAlgorithmUsed(false);
 						builder.setSingleChoiceItems(algorithms, 0, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface arg0, int arg1) {
@@ -1019,6 +1036,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 								} else  if (arg1 == 2){
 									drowsinessDetector.setCannyAlgorithmUsed(true);
 								} else if (arg1 == 3){
+									drowsinessDetector.setSobelAlgorithmUsed(true);
+								} else if (arg1 == 4){
 									drowsinessDetector.setDoNothing(true);
 								}
 							}

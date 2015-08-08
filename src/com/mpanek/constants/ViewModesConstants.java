@@ -32,6 +32,9 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_BIN_ADAPTIVE_MEAN = 29;
 	public static final int VIEW_MODE_BIN_ADAPTIVE_GAUSSIAN = 30;
 	public static final int VIEW_MODE_CANNY_EDGE = 31;
-
-
+	public static final int VIEW_MODE_SOBEL_EDGE = 32;
+	public static final int VIEW_MODE_LAPLACIAN_EDGE = 33;
+	public static final int VIEW_MODE_SOBEL_EDGE_ADVANCED = 34;
+	public static final int VIEW_MODE_LAPLACIAN_EDGE_ADVANCED = 35;
+	
 }

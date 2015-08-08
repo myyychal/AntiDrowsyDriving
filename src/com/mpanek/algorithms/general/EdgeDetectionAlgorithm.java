@@ -1,5 +1,7 @@
 package com.mpanek.algorithms.general;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
@@ -33,7 +35,50 @@ public class EdgeDetectionAlgorithm {
 			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
 			Imgproc.Canny(frame, frame, firstThreshold, secondThreshold, apertureSize, isL2Gradient);
 		}
-
+	}
+	
+	public void sobelEdgeDetection(Mat frame){
+		if (frame.channels() == 1){
+			Imgproc.Sobel(frame, frame, CvType.CV_8U, 1, 1);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		} else {
+			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+			Imgproc.Sobel(frame, frame, CvType.CV_8U, 1, 1);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		}
+	}
+	
+	public void sobelAdvancedEdgeDetection(Mat frame){
+		if (frame.channels() == 1){
+			Imgproc.Sobel(frame, frame, CvType.CV_8U, 1, 1, 5, 1, 0);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		} else {
+			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+			Imgproc.Sobel(frame, frame, CvType.CV_8U, 1, 1, 5, 1, 0);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		}
+	}
+	
+	public void laplacianEdgeDetection(Mat frame){
+		if (frame.channels() == 1){
+			Imgproc.Laplacian(frame, frame, CvType.CV_8U);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		} else {
+			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+			Imgproc.Laplacian(frame, frame, CvType.CV_8U);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		}
+	}
+	
+	public void laplacianAdvancedEdgeDetection(Mat frame){
+		if (frame.channels() == 1){
+			Imgproc.Laplacian(frame, frame, CvType.CV_8U, 3, 1, 0);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		} else {
+			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+			Imgproc.Laplacian(frame, frame, CvType.CV_8U, 3, 1, 0);
+			Core.convertScaleAbs(frame, frame, 10, 0);
+		}
 	}
 	
 	//findContours

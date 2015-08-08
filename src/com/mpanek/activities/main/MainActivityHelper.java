@@ -61,9 +61,6 @@ public class MainActivityHelper {
 			case 6:
 				mViewMode = ViewModesConstants.VIEW_MODE_STASM;
 				break;
-			case 7:
-				mViewMode = ViewModesConstants.VIEW_MODE_CANNY_EDGE;
-				break;
 			}
 		} else if (item.getGroupId() == 6) {
 			switch (item.getItemId()) {
@@ -93,6 +90,24 @@ public class MainActivityHelper {
 				break;
 			case 4:
 				mViewMode = ViewModesConstants.VIEW_MODE_BIN_ADAPTIVE_GAUSSIAN;
+				break;
+			}
+		} else if (item.getGroupId() == 9){
+			switch (item.getItemId()){
+			case 0:
+				mViewMode = ViewModesConstants.VIEW_MODE_CANNY_EDGE;
+				break;
+			case 1:
+				mViewMode = ViewModesConstants.VIEW_MODE_SOBEL_EDGE;
+				break;
+			case 2:
+				mViewMode = ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE;
+				break;
+			case 3:
+				mViewMode = ViewModesConstants.VIEW_MODE_SOBEL_EDGE_ADVANCED;
+				break;
+			case 4:
+				mViewMode = ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE_ADVANCED;
 				break;
 			}
 		}

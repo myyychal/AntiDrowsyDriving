@@ -53,6 +53,7 @@ public class DrowsinessDetector {
 
 	private boolean isSeparateEyesDetection = false;
 	private boolean isCannyAlgorithmUsed = false;
+	private boolean isSobelAlgorithmUsed = false;
 	private boolean isSimpleBinarizationUsed = false;
 
 	private boolean isDoNothing = false;
@@ -198,10 +199,18 @@ public class DrowsinessDetector {
 						if (isCannyAlgorithmUsed) {
 							claheAlgorithm.process(eyeToShowAndProcess);
 							edgeDetectionAlgorithm.cannyEdgeDetection(eyeToShowAndProcess);
+						} else if (isSobelAlgorithmUsed){
+							claheAlgorithm.process(eyeToShowAndProcess);
+							Imgproc.GaussianBlur(eyeToShowAndProcess, eyeToShowAndProcess, new Size(gaussianBlur, gaussianBlur), 0);
+							edgeDetectionAlgorithm.laplacianEdgeDetection(eyeToShowAndProcess);
+							Scalar meanValues = Core.mean(eyeToShowAndProcess);
+							darkBrightRatioAlgorithm.getBinarizationAlgorithm().setThreshold((int) meanValues.val[0]);
+							//darkBrightRatioAlgorithm.getBinarizationAlgorithm().standardBinarization(eyeToShowAndProcess);
+							darkBrightRatioAlgorithm.getBinarizationAlgorithm().adaptiveMeanBinarization(eyeToShowAndProcess);
 						} else {
 							if (isSimpleBinarizationUsed) {
 								Scalar meanValues = Core.mean(eyeToShowAndProcess);
-								Log.i(TAG, "Mean values: " + meanValues.toString());
+								darkBrightRatioAlgorithm.getBinarizationAlgorithm().setThreshold((int) meanValues.val[0]);
 								darkBrightRatioAlgorithm.claheEqualizeSimpleBinarizeAndCloseOperation(eyeToShowAndProcess);
 							} else {
 								darkBrightRatioAlgorithm.claheEqualizeAdaptiveBinarizeAndCloseOperation(eyeToShowAndProcess);
@@ -497,6 +506,14 @@ public class DrowsinessDetector {
 
 	public void setCannyAlgorithmUsed(boolean isCannyAlgorithmUsed) {
 		this.isCannyAlgorithmUsed = isCannyAlgorithmUsed;
+	}
+
+	public boolean isSobelAlgorithmUsed() {
+		return isSobelAlgorithmUsed;
+	}
+
+	public void setSobelAlgorithmUsed(boolean isSobelAlgorithmUsed) {
+		this.isSobelAlgorithmUsed = isSobelAlgorithmUsed;
 	}
 
 	public boolean isSimpleBinarizationUsed() {
