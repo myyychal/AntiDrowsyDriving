@@ -5,6 +5,8 @@ import org.opencv.imgproc.Imgproc;
 
 public class BinarizationAlgorithm {
 	
+	private static final String TAG = "AntiDrowsyDriving::BinarizationAlgorithm";
+	
 	int threshold;
 	int maxValue;
 	int blockSize;

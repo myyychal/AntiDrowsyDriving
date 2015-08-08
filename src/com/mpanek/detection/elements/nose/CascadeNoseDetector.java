@@ -12,13 +12,14 @@ import com.mpanek.utils.VisualUtils;
 
 public class CascadeNoseDetector extends CascadeDetector {
 
+	private static final String TAG = "AntiDrowsyDriving::CascadeNoseDetector";
+	
 	private Rect[] lastFoundNoses;
 	private Rect lastFoundNose;
 
 	public CascadeNoseDetector() {
 		super();
 		this.cascadeFileName = "haarcascade_mcs_nose.xml";
-		TAG = "AntiDrowsyDriving::CascadeNoseDetector";
 		this.scaleFactor = 1.2f;
 		this.minNeighbours = 2;
 		this.mRelativeMinObjectSize = 0.2f;

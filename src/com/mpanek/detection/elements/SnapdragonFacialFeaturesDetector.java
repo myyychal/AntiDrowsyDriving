@@ -17,11 +17,12 @@ import com.qualcomm.snapdragon.sdk.face.FacialProcessing;
 import com.qualcomm.snapdragon.sdk.face.FacialProcessing.PREVIEW_ROTATION_ANGLE;
 
 public class SnapdragonFacialFeaturesDetector {
+	
+	private static final String TAG = "AntiDrowsyDriving::SnapdragonFacialFeaturesDetector";
 
 	FacialProcessing faceProc;
 	FaceData[] faceArray = null;
 	Display display;
-	String TAG;
 	int mCameraId;
 
 	public SnapdragonFacialFeaturesDetector() {
@@ -29,20 +30,18 @@ public class SnapdragonFacialFeaturesDetector {
 		faceProc = FacialProcessing.getInstance();
 	}
 
-	public SnapdragonFacialFeaturesDetector(Display display, String tAG, int mCameraId) {
+	public SnapdragonFacialFeaturesDetector(Display display, int mCameraId) {
 		super();
 		this.display = display;
-		TAG = tAG;
 		this.mCameraId = mCameraId;
 	}
 
-	public SnapdragonFacialFeaturesDetector(FacialProcessing faceProc, FaceData[] faceArray, Display display, int mCameraId, String tag) {
+	public SnapdragonFacialFeaturesDetector(FacialProcessing faceProc, FaceData[] faceArray, Display display, int mCameraId) {
 		super();
 		this.faceProc = faceProc;
 		this.faceArray = faceArray;
 		this.display = display;
 		this.mCameraId = mCameraId;
-		this.TAG = tag;
 	}
 
 	public FacialProcessing getFaceProc() {
@@ -80,11 +79,7 @@ public class SnapdragonFacialFeaturesDetector {
 	public String getTAG() {
 		return TAG;
 	}
-
-	public void setTAG(String tAG) {
-		TAG = tAG;
-	}
-
+	
 	public Mat findFace(Mat img, int orientation) {
 		int dRotation = display.getRotation();
 		PREVIEW_ROTATION_ANGLE angleEnum = PREVIEW_ROTATION_ANGLE.ROT_0;

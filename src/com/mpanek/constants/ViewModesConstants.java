@@ -31,7 +31,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_BIN_OTSU = 28;
 	public static final int VIEW_MODE_BIN_ADAPTIVE_MEAN = 29;
 	public static final int VIEW_MODE_BIN_ADAPTIVE_GAUSSIAN = 30;
-	
+	public static final int VIEW_MODE_CANNY_EDGE = 31;
 
 
 }

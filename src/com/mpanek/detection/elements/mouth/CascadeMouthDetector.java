@@ -10,6 +10,8 @@ import org.opencv.objdetect.Objdetect;
 import com.mpanek.detection.elements.CascadeDetector;
 
 public class CascadeMouthDetector extends CascadeDetector {
+	
+	private static final String TAG = "AntiDrowsyDriving::CascadeMouthDetector";
 
 	private Rect[] lastFoundMouths;
 	private Rect lastFoundMouth;
@@ -17,7 +19,6 @@ public class CascadeMouthDetector extends CascadeDetector {
 	public CascadeMouthDetector() {
 		super();
 		this.cascadeFileName = "haarcascade_mcs_mouth.xml";
-		TAG = "AntiDrowsyDriving::CascadeMouthDetector";
 		this.scaleFactor = 1.2f;
 		this.minNeighbours = 2;
 		this.mRelativeMinObjectSize = 0.1f;

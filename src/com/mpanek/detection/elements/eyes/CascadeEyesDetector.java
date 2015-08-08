@@ -14,16 +14,16 @@ import android.util.Log;
 import com.mpanek.detection.elements.CascadeDetector;
 
 public class CascadeEyesDetector extends CascadeDetector {
+	
+	private static final String TAG = "AntiDrowsyDriving::CascadeEyesDetector";
 
 	private Rect[] lastFoundEyes;
 	private boolean isBothEyes = false;
 
 	public CascadeEyesDetector() {
-		super();
 		cascadeFileName = "haarcascade_righteye_2splits.xml";
-		TAG = "AntiDrowsyDriving::CascadeEyesDetector";
 		this.scaleFactor = 1.1f;
-		this.minNeighbours = 2;
+		this.minNeighbours = 3;
 		this.mRelativeMinObjectSize = 0.1f;
 		this.mAbsoluteMinObjectSize = 0;
 		this.mRelativeMaxObjectSize = 0.3f;
@@ -69,7 +69,7 @@ public class CascadeEyesDetector extends CascadeDetector {
 		return eyesArray;
 	}
 
-	public Rect[] findEyes(Mat imgToFind, Rect face) {
+	public Rect[] findEyes(Mat imgToFind, Rect face, boolean isHalfFace) {
 		if (mAbsoluteMinObjectSize == 0 && mAbsoluteMaxObjectSize == 0 || isSizeManuallyChanged) {
 			int heightGray = face.height;
 			if (Math.round(heightGray * mRelativeMinObjectSize) > 0 && Math.round(heightGray * mRelativeMaxObjectSize) > 0) {
@@ -94,8 +94,8 @@ public class CascadeEyesDetector extends CascadeDetector {
 		if (javaDetector != null) {
 			if (isBothEyes) {
 				Log.i(TAG, "both eyes");
-				javaDetector.detectMultiScale(imgToFindWithROI, eyes, scaleFactor, minNeighbours, detectionFlag, new Size(6*mAbsoluteMinObjectSize,
-						mAbsoluteMinObjectSize), new Size(6*mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
+				javaDetector.detectMultiScale(imgToFindWithROI, eyes, scaleFactor, minNeighbours, detectionFlag, new Size(6 * mAbsoluteMinObjectSize,
+						mAbsoluteMinObjectSize), new Size(6 * mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
 			} else {
 				javaDetector.detectMultiScale(imgToFindWithROI, eyes, scaleFactor, minNeighbours, detectionFlag, new Size(mAbsoluteMinObjectSize,
 						mAbsoluteMinObjectSize), new Size(mAbsoluteMaxObjectSize, mAbsoluteMaxObjectSize));
@@ -103,73 +103,91 @@ public class CascadeEyesDetector extends CascadeDetector {
 		}
 
 		Rect[] eyesArray = eyes.toArray();
-		
+
 		Rect[] newEyesArray = null;
 		ArrayList<Rect> newEyesList = new ArrayList<Rect>();
 		ArrayList<Rect> leftEyes = new ArrayList<Rect>();
 		ArrayList<Rect> rightEyes = new ArrayList<Rect>();
-		double middleXFace = (face.tl().x + face.br().x)/2;
+		double middleXFace = (face.tl().x + face.br().x) / 2;
 		for (int i = 0; i < eyesArray.length; i++) {
 			Point eyeTl = new Point(eyesArray[i].x + face.x, eyesArray[i].y + face.y);
 			Point eyeBr = new Point(eyesArray[i].x + eyesArray[i].width + face.x, eyesArray[i].y + eyesArray[i].height + face.y);
-			double middleXEye = (eyeTl.x + eyeBr.x)/2;
-			if (middleXEye < middleXFace){
+			double middleXEye = (eyeTl.x + eyeBr.x) / 2;
+			if (middleXEye < middleXFace) {
 				leftEyes.add(new Rect(eyeTl, eyeBr));
 			} else {
 				rightEyes.add(new Rect(eyeTl, eyeBr));
 			}
 		}
-		double leftX = imgToFind.width();
-		Rect leftEye = null;
-		for (Rect leftRect : leftEyes){
-			if (leftRect.tl().x < leftX){
-				leftX = leftRect.tl().x;
-				leftEye = leftRect;
+		if (!isHalfFace) {
+			double leftX = imgToFind.width();
+			Rect leftEye = null;
+			for (Rect leftRect : leftEyes) {
+				if (leftRect.tl().x < leftX) {
+					leftX = leftRect.tl().x;
+					leftEye = leftRect;
+				}
 			}
-		}
-		if (leftEye != null){
-			newEyesList.add(leftEye);
-		}
-		Rect rightEye = null;
-		double rightX = 0;
-		for (Rect rightRect : rightEyes){
-			if (rightRect.br().x > rightX){
-				rightX = rightRect.br().x;
-				rightEye = rightRect;
+			if (leftEye != null) {
+				newEyesList.add(leftEye);
 			}
+			Rect rightEye = null;
+			double rightX = 0;
+			for (Rect rightRect : rightEyes) {
+				if (rightRect.br().x > rightX) {
+					rightX = rightRect.br().x;
+					rightEye = rightRect;
+				}
+			}
+			if (rightEye != null) {
+				newEyesList.add(rightEye);
+			}
+		} else {
+			newEyesList.addAll(rightEyes);
+			newEyesList.addAll(leftEyes);
+			double middleY = (face.tl().y + face.br().y) / 2;
+			double minMiddleY = face.height;
+			Rect chosenEye = null;
+			for (Rect rect : newEyesList) {
+				double middleRectY = (rect.tl().y + rect.br().y) / 2;
+				if (Math.abs(middleY - middleRectY) < minMiddleY) {
+					minMiddleY = Math.abs(middleY - middleRectY);
+					chosenEye = rect;
+				}
+			}
+			newEyesList.clear();
+			if (chosenEye != null) {
+				newEyesList.add(chosenEye);
+			}
+			// double leftY = 0;
+			// Rect leftEye = null;
+			// for (Rect leftRect : leftEyes) {
+			// if (leftRect.tl().y > leftY) {
+			// leftY = leftRect.tl().y;
+			// leftEye = leftRect;
+			// }
+			// }
+			// if (leftEye != null) {
+			// newEyesList.add(leftEye);
+			// }
+			// Rect rightEye = null;
+			// double rightY = 0;
+			// for (Rect rightRect : rightEyes) {
+			// if (rightRect.br().y > rightY) {
+			// rightY = rightRect.br().y;
+			// rightEye = rightRect;
+			// }
+			// }
+			// if (rightEye != null) {
+			// newEyesList.add(rightEye);
+			// }
 		}
-		if (rightEye != null){
-			newEyesList.add(rightEye);
-		}
-		
-//		double leftY = 0;
-//		Rect leftEye = null;
-//		for (Rect leftRect : leftEyes){
-//			if (leftRect.tl().y > leftY){
-//				leftY = leftRect.tl().y;
-//				leftEye = leftRect;
-//			}
-//		}
-//		if (leftEye != null){
-//			newEyesList.add(leftEye);
-//		}
-//		Rect rightEye = null;
-//		double rightY = 0;
-//		for (Rect rightRect : rightEyes){
-//			if (rightRect.br().y > rightY){
-//				rightY = rightRect.br().y;
-//				rightEye = rightRect;
-//			}
-//		}
-//		if (rightEye != null){
-//			newEyesList.add(rightEye);
-//		}
-		
+
 		newEyesArray = newEyesList.toArray(new Rect[newEyesList.size()]);
-		
-		if (cascadeFileName.contains("split")){
-			for (Rect rect : newEyesArray){
-				rect.y += rect.height/2 - rect.height/10;
+
+		if (cascadeFileName.contains("split")) {
+			for (Rect rect : newEyesArray) {
+				rect.y += rect.height / 2 - rect.height / 10;
 				rect.height /= 2;
 			}
 		}

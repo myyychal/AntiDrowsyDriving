@@ -8,6 +8,8 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 public class HistogramEqualizationAlgorithm {
+	
+	private static final String TAG = "AntiDrowsyDriving::HistogramEqualizationAlgorithm";
 
 	public void standardEqualizationJava(Mat frame){
 		if (frame.channels() == 1){

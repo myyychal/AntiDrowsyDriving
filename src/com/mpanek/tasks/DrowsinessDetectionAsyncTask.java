@@ -7,6 +7,8 @@ import com.mpanek.detection.main.DrowsinessDetector;
 import android.os.AsyncTask;
 
 public class DrowsinessDetectionAsyncTask extends AsyncTask<Void, Void, Void> {
+	
+	private static final String TAG = "AntiDrowsyDriving::DrowsinessDetectionAsyncTask";
 
 	Mat mGray, mRgba;
 	DrowsinessDetector drowsinessDetector;

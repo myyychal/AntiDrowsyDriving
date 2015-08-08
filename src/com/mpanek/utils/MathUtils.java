@@ -3,6 +3,8 @@ package com.mpanek.utils;
 import java.math.BigDecimal;
 
 public class MathUtils {
+	
+	private static final String TAG = "AntiDrowsyDriving::MathUtils";
 
 	public static BigDecimal round(float d, int decimalPlace) {
 		BigDecimal bd = new BigDecimal(Float.toString(d));

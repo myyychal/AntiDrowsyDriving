@@ -2,21 +2,30 @@ package com.mpanek.detection.main;
 
 import java.util.ArrayList;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import android.util.Log;
+
 import com.mpanek.algorithms.general.ClaheAlgorithm;
+import com.mpanek.algorithms.general.EdgeDetectionAlgorithm;
+import com.mpanek.algorithms.specialized.DarkBrightRatioAlgorithm;
 import com.mpanek.constants.DrawingConstants;
 import com.mpanek.detection.elements.eyes.CascadeEyesDetector;
 import com.mpanek.detection.elements.face.CascadeFaceDetector;
 import com.mpanek.detection.elements.mouth.CascadeMouthDetector;
 import com.mpanek.detection.elements.nose.CascadeNoseDetector;
 import com.mpanek.utils.DrawingUtils;
+import com.mpanek.utils.VisualUtils;
 
 public class DrowsinessDetector {
+	
+	private static final String TAG = "AntiDrowsyDriving::DrowsinessDetector";
 
 	CascadeFaceDetector cascadeFaceDetector;
 	CascadeEyesDetector cascadeEyesDetector;
@@ -27,6 +36,8 @@ public class DrowsinessDetector {
 	CascadeEyesDetector cascadeRightEyeDetector;
 
 	ClaheAlgorithm claheAlgorithm;
+	DarkBrightRatioAlgorithm darkBrightRatioAlgorithm;
+	EdgeDetectionAlgorithm edgeDetectionAlgorithm;
 
 	final CharSequence[] items = { "Equalize histogram", "Gaussian blur", "Detect face", "Detect eyes", "Detect nose", "Detect mouth",
 			"Additional equalization after face detection", "Additional gaussian blur after face detection" };
@@ -34,15 +45,22 @@ public class DrowsinessDetector {
 	private boolean isEqualizeHistogram = true;
 	private boolean isGaussianBlur = true;
 	private boolean isDetectFace = true;
-	private boolean isAdditionalEqualization = false;
+	private boolean isAdditionalEqualization = true;
 	private boolean isAdditionalGauss = false;
 	private boolean isDetectEyes = true;
-	private boolean isDetectNose = true;
-	private boolean isDetectMouth = true;
+	private boolean isDetectNose = false;
+	private boolean isDetectMouth = false;
 
 	private boolean isSeparateEyesDetection = false;
+	private boolean isCannyAlgorithmUsed = false;
+	private boolean isSimpleBinarizationUsed = false;
+
+	private boolean isDoNothing = false;
 
 	int gaussianBlur = 5;
+
+	long frameCounter = 0;
+	boolean isFaceFound = false;
 
 	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
 			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector) {
@@ -55,12 +73,19 @@ public class DrowsinessDetector {
 	}
 
 	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
-			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector, ClaheAlgorithm claheAlgorithm) {
+			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector, ClaheAlgorithm claheAlgorithm,
+			DarkBrightRatioAlgorithm darkBrightRatioAlgorithm, EdgeDetectionAlgorithm edgeDetectionAlgorithm) {
 		this.cascadeFaceDetector = cascadeFaceDetector;
 		this.cascadeEyesDetector = cascadeEyesDetector;
 		this.cascadeMouthDetector = cascadeMouthDetector;
 		this.cascadeNoseDetector = cascadeNoseDetector;
 		this.claheAlgorithm = claheAlgorithm;
+		this.darkBrightRatioAlgorithm = darkBrightRatioAlgorithm;
+		// darkBrightRatioAlgorithm.getBinarizationAlgorithm().setBlockSize(3);
+		// darkBrightRatioAlgorithm.getBinarizationAlgorithm().setC(1.12);
+		// darkBrightRatioAlgorithm.setErosionSize(3);
+		darkBrightRatioAlgorithm.getBinarizationAlgorithm().setBlockSize(35);
+		this.edgeDetectionAlgorithm = edgeDetectionAlgorithm;
 	}
 
 	public Mat processDetection(Mat mGray, Mat mRgba) {
@@ -76,7 +101,16 @@ public class DrowsinessDetector {
 			double boundingMultiplier = 0.1;
 			boundingBox.x += boundingMultiplier * mGray.width();
 			boundingBox.width -= 2 * boundingMultiplier * mGray.width();
-			foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
+			if (frameCounter < 5 || frameCounter % 10 == 0 || !isFaceFound) {
+				foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
+				if (foundFaceInDetection == null) {
+					isFaceFound = false;
+				} else {
+					isFaceFound = true;
+				}
+			} else {
+				foundFaceInDetection = null;
+			}
 			if (foundFaceInDetection == null) {
 				foundFaceInDetection = cascadeFaceDetector.getLastFoundFace();
 			}
@@ -97,7 +131,6 @@ public class DrowsinessDetector {
 			}
 
 			if (isAdditionalEqualization) {
-				ClaheAlgorithm claheAlgorithm = new ClaheAlgorithm();
 				claheAlgorithm.process(imgToFindWithROI);
 			}
 			if (isAdditionalGauss) {
@@ -106,22 +139,31 @@ public class DrowsinessDetector {
 
 			if (isDetectEyes) {
 				if (isSeparateEyesDetection) {
+					// swapped detectors
 					Rect foundFaceForLeftEyes = foundFaceInDetection.clone();
 					foundFaceForLeftEyes.width /= 2;
-					leftEyes = cascadeLeftEyeDetector.findEyes(mGray, foundFaceForLeftEyes);
+					leftEyes = cascadeRightEyeDetector.findEyes(mGray, foundFaceForLeftEyes, true);
 					if (leftEyes == null || leftEyes.length == 0) {
-						leftEyes = cascadeEyesDetector.getLastFoundEyes();
+						leftEyes = cascadeRightEyeDetector.getLastFoundEyes();
 					}
 					Rect foundFaceForRightEyes = foundFaceInDetection.clone();
 					foundFaceForRightEyes.width /= 2;
 					foundFaceForRightEyes.x += foundFaceForRightEyes.width;
-					rightEyes = cascadeRightEyeDetector.findEyes(mGray, foundFaceForRightEyes);
+					rightEyes = cascadeLeftEyeDetector.findEyes(mGray, foundFaceForRightEyes, true);
 					if (rightEyes == null || rightEyes.length == 0) {
-						rightEyes = cascadeEyesDetector.getLastFoundEyes();
+						rightEyes = cascadeLeftEyeDetector.getLastFoundEyes();
 					}
+					ArrayList<Rect> separateEyes = new ArrayList<Rect>();
+					if (leftEyes != null && leftEyes.length > 0) {
+						separateEyes.add(leftEyes[0]);
+					}
+					if (rightEyes != null && rightEyes.length > 0) {
+						separateEyes.add(rightEyes[0]);
+					}
+					eyes = separateEyes.toArray(new Rect[separateEyes.size()]);
 				} else {
 					Rect foundFaceForEyes = foundFaceInDetection.clone();
-					eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes);
+					eyes = cascadeEyesDetector.findEyes(mGray, foundFaceForEyes, false);
 					if (eyes == null || eyes.length == 0) {
 						eyes = cascadeEyesDetector.getLastFoundEyes();
 					}
@@ -139,6 +181,45 @@ public class DrowsinessDetector {
 				nose = cascadeNoseDetector.findNose(mGray, foundFaceForNose);
 				if (nose == null) {
 					nose = cascadeNoseDetector.getLastFoundNose();
+				}
+			}
+
+			if (eyes != null && eyes.length > 0) {
+				ArrayList<Mat> eyesToShowAndProcess = new ArrayList<Mat>();
+				Mat firstEyeToShow = new Mat(mGray, eyes[0]);
+				int firstEyeRowStart = (int) (0.3 * mGray.height());
+				eyesToShowAndProcess.add(firstEyeToShow);
+				if (eyes.length == 2) {
+					Mat secondEyeToShow = new Mat(mGray, eyes[1]);
+					eyesToShowAndProcess.add(secondEyeToShow);
+				}
+				for (Mat eyeToShowAndProcess : eyesToShowAndProcess) {
+					if (!isDoNothing) {
+						if (isCannyAlgorithmUsed) {
+							claheAlgorithm.process(eyeToShowAndProcess);
+							edgeDetectionAlgorithm.cannyEdgeDetection(eyeToShowAndProcess);
+						} else {
+							if (isSimpleBinarizationUsed) {
+								Scalar meanValues = Core.mean(eyeToShowAndProcess);
+								Log.i(TAG, "Mean values: " + meanValues.toString());
+								darkBrightRatioAlgorithm.claheEqualizeSimpleBinarizeAndCloseOperation(eyeToShowAndProcess);
+							} else {
+								darkBrightRatioAlgorithm.claheEqualizeAdaptiveBinarizeAndCloseOperation(eyeToShowAndProcess);
+							}
+						}
+					} else {
+						claheAlgorithm.process(eyeToShowAndProcess);
+						// Imgproc.GaussianBlur(eyeToShowAndProcess,
+						// eyeToShowAndProcess, new Size(gaussianBlur,
+						// gaussianBlur), 0);
+					}
+					VisualUtils.resizeImage(eyeToShowAndProcess, 3);
+				}
+				firstEyeToShow.copyTo(mGray.submat(firstEyeRowStart, firstEyeRowStart + firstEyeToShow.height(), 0, firstEyeToShow.width()));
+				if (eyes.length == 2) {
+					Mat secondEyeToShow = eyesToShowAndProcess.get(1);
+					secondEyeToShow.copyTo(mGray.submat(firstEyeRowStart, firstEyeRowStart + secondEyeToShow.height(), mGray.width()
+							- secondEyeToShow.width(), mGray.width()));
 				}
 			}
 
@@ -196,6 +277,8 @@ public class DrowsinessDetector {
 		} else {
 			Imgproc.cvtColor(mGray, mRgba, Imgproc.COLOR_GRAY2RGBA);
 		}
+
+		frameCounter++;
 
 		return mRgba;
 	}
@@ -262,6 +345,14 @@ public class DrowsinessDetector {
 
 	public void setClaheAlgorithm(ClaheAlgorithm claheAlgorithm) {
 		this.claheAlgorithm = claheAlgorithm;
+	}
+
+	public DarkBrightRatioAlgorithm getDarkBrightRatioAlgorithm() {
+		return darkBrightRatioAlgorithm;
+	}
+
+	public void setDarkBrightRatioAlgorithm(DarkBrightRatioAlgorithm darkBrightRatioAlgorithm) {
+		this.darkBrightRatioAlgorithm = darkBrightRatioAlgorithm;
 	}
 
 	public CharSequence[] getItems() {
@@ -390,6 +481,38 @@ public class DrowsinessDetector {
 
 	public void setGaussianBlur(int gaussianBlur) {
 		this.gaussianBlur = gaussianBlur;
+	}
+
+	public EdgeDetectionAlgorithm getEdgeDetectionAlgorithm() {
+		return edgeDetectionAlgorithm;
+	}
+
+	public void setEdgeDetectionAlgorithm(EdgeDetectionAlgorithm edgeDetectionAlgorithm) {
+		this.edgeDetectionAlgorithm = edgeDetectionAlgorithm;
+	}
+
+	public boolean isCannyAlgorithmUsed() {
+		return isCannyAlgorithmUsed;
+	}
+
+	public void setCannyAlgorithmUsed(boolean isCannyAlgorithmUsed) {
+		this.isCannyAlgorithmUsed = isCannyAlgorithmUsed;
+	}
+
+	public boolean isSimpleBinarizationUsed() {
+		return isSimpleBinarizationUsed;
+	}
+
+	public void setSimpleBinarizationUsed(boolean isSimpleBinarizationUsed) {
+		this.isSimpleBinarizationUsed = isSimpleBinarizationUsed;
+	}
+
+	public boolean isDoNothing() {
+		return isDoNothing;
+	}
+
+	public void setDoNothing(boolean isDoNothing) {
+		this.isDoNothing = isDoNothing;
 	}
 
 }

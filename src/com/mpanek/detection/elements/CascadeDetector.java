@@ -16,7 +16,7 @@ public class CascadeDetector {
 	protected File cascadeFile;
 	protected CascadeClassifier javaDetector;
 
-	protected String TAG;
+	private static final String TAG = "AntiDrowsyDriving::CascadeDetector";
 
 	protected boolean isSizeManuallyChanged = false;
 

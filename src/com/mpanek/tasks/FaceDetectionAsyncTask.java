@@ -8,6 +8,8 @@ import com.mpanek.detection.elements.face.CascadeFaceDetector;
 import android.os.AsyncTask;
 
 public class FaceDetectionAsyncTask extends AsyncTask<Void, Void, Rect> {
+	
+	private static final String TAG = "AntiDrowsyDriving::FaceDetectionAsyncTask";
 
 	Mat frame;
 	Rect foundFace;

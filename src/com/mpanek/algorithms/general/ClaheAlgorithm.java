@@ -3,6 +3,8 @@ package com.mpanek.algorithms.general;
 import org.opencv.core.Mat;
 
 public class ClaheAlgorithm {
+	
+	private static final String TAG = "AntiDrowsyDriving::ClaheAlgorithm";
 
 	private int currentClipLimit = 4;
 	private int currentTileSize = 4;

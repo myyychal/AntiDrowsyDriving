@@ -6,10 +6,12 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 public class VisualUtils {
+	
+	private static final String TAG = "AntiDrowsyDriving::VisualUtils";
 
 	public static Mat equalizeIntensity(Mat inputImage) {
 		if (inputImage.channels() >= 3) {
@@ -56,6 +58,10 @@ public class VisualUtils {
 	
 	public static Point getCentrePoint(Rect rect){
 		return new Point((rect.tl().x + rect.br().x)/2, (rect.tl().y + rect.br().y)/2);
+	}
+	
+	public static void resizeImage(Mat frame, float scale){
+		Imgproc.resize(frame, frame, new Size(scale*frame.width(), scale*frame.height()));
 	}
 
 }

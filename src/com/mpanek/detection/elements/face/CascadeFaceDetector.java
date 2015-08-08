@@ -10,13 +10,14 @@ import com.mpanek.detection.elements.CascadeDetector;
 import com.mpanek.utils.VisualUtils;
 
 public class CascadeFaceDetector extends CascadeDetector {
+	
+	private static final String TAG = "AntiDrowsyDriving::CascadeFaceDetector";
 
 	private Rect lastFoundFace;
 
 	public CascadeFaceDetector() {
 		super();
 		this.cascadeFileName = "lbpcascade_frontalface.xml";
-		TAG = "AntiDrowsyDriving::CascadeFaceDetector";
 		this.scaleFactor = 1.04f;
 		this.minNeighbours = 2;
 		this.mRelativeMinObjectSize = 0.35f;
