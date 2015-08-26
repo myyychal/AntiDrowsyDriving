@@ -189,6 +189,8 @@ public class CascadeEyesDetector extends CascadeDetector {
 			for (Rect rect : newEyesArray) {
 				rect.y += rect.height / 2 - rect.height / 10;
 				rect.height /= 2;
+				rect.y += rect.height/10;
+				rect.height -= rect.height/10;
 			}
 		}
 

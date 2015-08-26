@@ -36,5 +36,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_LAPLACIAN_EDGE = 33;
 	public static final int VIEW_MODE_SOBEL_EDGE_ADVANCED = 34;
 	public static final int VIEW_MODE_LAPLACIAN_EDGE_ADVANCED = 35;
+	public static final int VIEW_MODE_MEAN_VALUES_VERTICAL_PROJECTION_ANALYSIS = 36;
+	public static final int VIEW_MODE_INTENSITY_VERTICAL_PROJECTION_ANALYSIS = 37;
 	
 }

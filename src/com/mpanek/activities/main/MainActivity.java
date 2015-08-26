@@ -27,6 +27,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.Objdetect;
 import org.opencv.video.Video;
@@ -302,7 +303,6 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		drowsinessDetector.setCascadeLeftEyeDetector(cascadeLeftEyeDetector);
 		drowsinessDetector.setCascadeRightEyeDetector(cascadeRightEyeDetector);
 		drowsinessDetector.setSeparateEyesDetection(false);
-		drowsinessDetector.setCannyAlgorithmUsed(false);
 
 		initVerticalSeekBars();
 
@@ -327,6 +327,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	@Override
 	public void onPause() {
+		Log.i(TAG, "onDestroy");
 		super.onPause();
 		if (mCustomCameraView != null)
 			mCustomCameraView.disableView();
@@ -334,14 +335,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	@Override
 	public void onResume() {
+		Log.i(TAG, "onDestroy");
 		super.onResume();
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_9, this, mLoaderCallback);
 	}
 
 	public void onDestroy() {
+		Log.i(TAG, "onDestroy");
 		super.onDestroy();
-		if (mCustomCameraView != null)
+		if (mCustomCameraView != null) {
 			mCustomCameraView.disableView();
+		}
 	}
 
 	public void onCameraViewStarted(int width, int height) {
@@ -413,27 +417,30 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		final int eqHistMode = mEqHistMode;
 
 		if (gaussCheckbox.isChecked() && viewMode != ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION) {
-			// Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame,
-			// new Size(gaussSize, gaussSize), 0);
-			AsyncTask.Status gaussBlurSyncTaskStatus = gaussBlurAsyncTask.getStatus();
-			if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.FINISHED)) {
-				Log.i(TAG, "gaussBlurAsyncTask is finished");
-				try {
-					currentlyUsedFrame = gaussBlurAsyncTask.get();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
-				gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
-				gaussBlurAsyncTask.execute();
-			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.PENDING)) {
-				Log.i(TAG, "gaussBlurAsyncTask is pending");
-				gaussBlurAsyncTask.setFrame(currentlyUsedFrame);
-				gaussBlurAsyncTask.execute();
-			} else if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.RUNNING)) {
-				Log.i(TAG, "gaussBlurAsyncTask is running");
-			}
+			Imgproc.GaussianBlur(currentlyUsedFrame, currentlyUsedFrame, new Size(gaussSize, gaussSize), 0);
+			// AsyncTask.Status gaussBlurSyncTaskStatus =
+			// gaussBlurAsyncTask.getStatus();
+			// if (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.FINISHED)) {
+			// Log.i(TAG, "gaussBlurAsyncTask is finished");
+			// try {
+			// currentlyUsedFrame = gaussBlurAsyncTask.get();
+			// } catch (InterruptedException e) {
+			// e.printStackTrace();
+			// } catch (ExecutionException e) {
+			// e.printStackTrace();
+			// }
+			// gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame,
+			// gaussSize);
+			// gaussBlurAsyncTask.execute();
+			// } else if
+			// (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.PENDING)) {
+			// Log.i(TAG, "gaussBlurAsyncTask is pending");
+			// gaussBlurAsyncTask.setFrame(currentlyUsedFrame);
+			// gaussBlurAsyncTask.execute();
+			// } else if
+			// (gaussBlurSyncTaskStatus.equals(AsyncTask.Status.RUNNING)) {
+			// Log.i(TAG, "gaussBlurAsyncTask is running");
+			// }
 		}
 
 		switch (eqHistMode) {
@@ -729,11 +736,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_CANNY_EDGE:
 			edgeDetectionAlgorithm.cannyEdgeDetection(currentlyUsedFrame);
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_SOBEL_EDGE:
 			edgeDetectionAlgorithm.sobelEdgeDetection(currentlyUsedFrame);
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE:
 			edgeDetectionAlgorithm.laplacianEdgeDetection(currentlyUsedFrame);
 			break;
@@ -741,11 +748,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_SOBEL_EDGE_ADVANCED:
 			edgeDetectionAlgorithm.sobelAdvancedEdgeDetection(currentlyUsedFrame);
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_LAPLACIAN_EDGE_ADVANCED:
 			edgeDetectionAlgorithm.laplacianAdvancedEdgeDetection(currentlyUsedFrame);
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_BIN_STANDARD:
 			binarizationAlgorithm.standardBinarization(currentlyUsedFrame);
 			break;
@@ -764,6 +771,16 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		case ViewModesConstants.VIEW_MODE_BIN_ADAPTIVE_GAUSSIAN:
 			binarizationAlgorithm.adaptiveGaussianBinarization(currentlyUsedFrame);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_MEAN_VALUES_VERTICAL_PROJECTION_ANALYSIS:
+			ArrayList<Long> vpaAnalysisArray = darkBrightRatioAlgorithm.countMeanVerticalProjection(currentlyUsedFrame);
+			darkBrightRatioAlgorithm.normalizeAndDrawVerticalProjectionAnalysisArrays(currentlyUsedFrame, vpaAnalysisArray, 0, 255);
+			break;
+
+		case ViewModesConstants.VIEW_MODE_INTENSITY_VERTICAL_PROJECTION_ANALYSIS:
+			ArrayList<Long> vpaAnalysisArray2 = darkBrightRatioAlgorithm.countIntensityVerticalProjection(currentlyUsedFrame);
+			darkBrightRatioAlgorithm.normalizeAndDrawVerticalProjectionAnalysisArrays(currentlyUsedFrame, vpaAnalysisArray2);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
@@ -956,13 +973,13 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewEqHistMenu.add(4, 1, Menu.NONE, "Standard (Java)");
 		mItemPreviewEqHistMenu.add(4, 2, Menu.NONE, "Standard (Cpp)");
 		mItemPreviewEqHistMenu.add(4, 3, Menu.NONE, "CLAHE");
-		
+
 		mItemPreviewEdgeDetectionMenu.add(9, 0, Menu.NONE, "Canny");
 		mItemPreviewEdgeDetectionMenu.add(9, 1, Menu.NONE, "Sobel");
 		mItemPreviewEdgeDetectionMenu.add(9, 2, Menu.NONE, "Laplacian");
 		mItemPreviewEdgeDetectionMenu.add(9, 3, Menu.NONE, "Sobel (advanced)");
 		mItemPreviewEdgeDetectionMenu.add(9, 4, Menu.NONE, "Laplacian (advanced)");
-		
+
 		mItemPreviewOtherMenu.add(5, 0, Menu.NONE, "Find features (Java)");
 		mItemPreviewOtherMenu.add(5, 1, Menu.NONE, "Find features (Cpp)");
 		mItemPreviewOtherMenu.add(5, 2, Menu.NONE, "Find corner Harris (Java)");
@@ -970,6 +987,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewOtherMenu.add(5, 4, Menu.NONE, "Optical flow (Java)");
 		mItemPreviewOtherMenu.add(5, 5, Menu.NONE, "Optical flow (Cpp)");
 		mItemPreviewOtherMenu.add(5, 6, Menu.NONE, "STASM");
+		mItemPreviewOtherMenu.add(5, 7, Menu.NONE, "Mean Values VPA");
+		mItemPreviewOtherMenu.add(5, 8, Menu.NONE, "Intensity VPA");
 
 		mItemPreviewBinarizationMenu.add(8, 0, Menu.NONE, "Standard");
 		mItemPreviewBinarizationMenu.add(8, 1, Menu.NONE, "Standard (trunc)");
@@ -1021,23 +1040,43 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						AlertDialog dialog2;
 						AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 						builder.setTitle("Select eye openess algorithm");
-						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization","DarkBright - simple binarization", "Edge detection - Canny", "Edge detection - Laplacian", "Do nothing" };
-						drowsinessDetector.setCannyAlgorithmUsed(false);
-						drowsinessDetector.setDoNothing(false);
+						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization", "DarkBright - simple binarization",
+								"Edge detection - Laplacian", "Mean values vertical projection analysis", "Intensity vertical projection analysis",
+								"Mean values horizontal projection analysis", "Intensity horizontal projection analysis", "Do nothing" };
+						drowsinessDetector.setAdaptiveBinarizationUsed(true);
+						drowsinessDetector.setProjectionAnalysis(false);
 						drowsinessDetector.setSimpleBinarizationUsed(false);
-						drowsinessDetector.setSobelAlgorithmUsed(false);
+						drowsinessDetector.setLaplacianAlgorithmUsed(false);
+						drowsinessDetector.setMeanValuesVPA(false);
+						drowsinessDetector.setIntensityVPA(false);
+						drowsinessDetector.setDoNothing(false);
+						drowsinessDetector.setMeanValuesHPA(false);
+						drowsinessDetector.setIntensityHPA(false);
 						builder.setSingleChoiceItems(algorithms, 0, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface arg0, int arg1) {
 								if (arg1 == 0) {
-									drowsinessDetector.setCannyAlgorithmUsed(false);
-								} else if (arg1 == 1){
+									drowsinessDetector.setAdaptiveBinarizationUsed(true);
+								} else if (arg1 == 1) {
+									drowsinessDetector.setAdaptiveBinarizationUsed(false);
 									drowsinessDetector.setSimpleBinarizationUsed(true);
-								} else  if (arg1 == 2){
-									drowsinessDetector.setCannyAlgorithmUsed(true);
-								} else if (arg1 == 3){
-									drowsinessDetector.setSobelAlgorithmUsed(true);
-								} else if (arg1 == 4){
+								} else if (arg1 == 2) {
+									drowsinessDetector.setAdaptiveBinarizationUsed(false);
+									drowsinessDetector.setLaplacianAlgorithmUsed(true);
+								} else if (arg1 == 3) {
+									drowsinessDetector.setProjectionAnalysis(true);
+									drowsinessDetector.setMeanValuesVPA(true);
+								} else if (arg1 == 4) {
+									drowsinessDetector.setProjectionAnalysis(true);
+									drowsinessDetector.setIntensityVPA(true);
+								} else if (arg1 == 5){
+									drowsinessDetector.setProjectionAnalysis(true);
+									drowsinessDetector.setMeanValuesHPA(true);
+								} else if (arg1 == 6){
+									drowsinessDetector.setProjectionAnalysis(true);
+									drowsinessDetector.setIntensityHPA(true);
+								} else if (arg1 == 7){
+									drowsinessDetector.setAdaptiveBinarizationUsed(false);
 									drowsinessDetector.setDoNothing(true);
 								}
 							}
@@ -1129,7 +1168,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		ArrayList<String> seekBarsStrings = new ArrayList<String>();
 		seekBarsStrings.addAll(verticalSeekBars.keySet());
 		final CharSequence[] items = seekBarsStrings.toArray(new CharSequence[seekBarsStrings.size()]);
-		final boolean[] checkedItems = { true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false, false};
+		final boolean[] checkedItems = { true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false,
+				false };
 		final Map<Integer, Integer> samePlaceVerticalSeekBars = initSamePlaceVerticalSeekBar();
 		builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
 			@Override

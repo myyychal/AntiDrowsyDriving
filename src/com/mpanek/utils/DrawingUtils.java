@@ -9,6 +9,8 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 
+import com.mpanek.constants.DrawingConstants;
+
 public class DrawingUtils {
 	
 	private static final String TAG = "AntiDrowsyDriving::DrawingUtils";
@@ -68,5 +70,50 @@ public class DrawingUtils {
 	public static void drawLinesFromRectanglesCentres(Rect[] rects, Mat imgToDraw, Scalar color){
 		drawLinesFromRectanglesCentres(rects, imgToDraw, color, 1);
 	}
-
+	
+	public static void putText(Mat frame, String text, Point startPoint){
+		Core.putText(frame, text, startPoint, Core.FONT_HERSHEY_PLAIN, Double.valueOf(2), DrawingConstants.WHITE);
+	}
+	
+	public static void removeAllBorders(Mat frame, int k, int valueToSet) {
+		byte buff[] = new byte[(int) (frame.total() * frame.channels())];
+		frame.get(0, 0, buff);
+		for (int i = 0; i < buff.length; i++) {
+			if (i < k * frame.cols() || i > (frame.rows() - k) * frame.cols()) {
+				buff[i] = (byte) valueToSet;
+			}
+		}
+		for (int j = 1; j < frame.rows() - k; j++) {
+			for (int l = 1; l < frame.cols(); l++) {
+				if (l < k || l > frame.cols() - k) {
+					buff[(k + j) * frame.cols() + l] = (byte) valueToSet;
+				}
+			}
+		}
+		frame.put(0, 0, buff);
+	}
+	
+	public static void removeHorizontalBorders(Mat frame, int k, int valueToSet) {
+		byte buff[] = new byte[(int) (frame.total() * frame.channels())];
+		frame.get(0, 0, buff);
+		for (int i = 0; i < buff.length; i++) {
+			if (i < k * frame.cols() || i > (frame.rows() - k) * frame.cols()) {
+				buff[i] = (byte) valueToSet;
+			}
+		}
+		frame.put(0, 0, buff);
+	}
+	
+	public static void removeVerticalBorders(Mat frame, int k, int valueToSet) {
+		byte buff[] = new byte[(int) (frame.total() * frame.channels())];
+		frame.get(0, 0, buff);
+		for (int j = 0; j < frame.rows(); j++) {
+			for (int l = 0; l < frame.cols(); l++) {
+				if (l < k || l > frame.cols() - k) {
+					buff[j * frame.cols() + l] = (byte) valueToSet;
+				}
+			}
+		}
+		frame.put(0, 0, buff);
+	}
 }

@@ -61,6 +61,11 @@ public class MainActivityHelper {
 			case 6:
 				mViewMode = ViewModesConstants.VIEW_MODE_STASM;
 				break;
+			case 7:
+				mViewMode = ViewModesConstants.VIEW_MODE_MEAN_VALUES_VERTICAL_PROJECTION_ANALYSIS;
+				break;
+			case 8:
+				mViewMode = ViewModesConstants.VIEW_MODE_INTENSITY_VERTICAL_PROJECTION_ANALYSIS;
 			}
 		} else if (item.getGroupId() == 6) {
 			switch (item.getItemId()) {
