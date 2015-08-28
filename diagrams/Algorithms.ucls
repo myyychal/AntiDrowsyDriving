@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.1.8" icons="true" always-add-relationships="true" generalizations="true" realizations="true" 
+  associations="true" dependencies="true" nesting-relationships="true">  
+  <class id="1" language="java" name="com.mpanek.algorithms.general.HistogramEqualizationAlgorithm" 
+    project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/algorithms/general/HistogramEqualizationAlgorithm.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="183" width="515" x="959" y="1058"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="2" language="java" name="com.mpanek.algorithms.general.ClaheAlgorithm" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/algorithms/general/ClaheAlgorithm.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="309" width="396" x="43" y="1058"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="com.mpanek.algorithms.specialized.DarkBrightRatioAlgorithm" 
+    project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/algorithms/specialized/DarkBrightRatioAlgorithm.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="981" width="780" x="241" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="com.mpanek.algorithms.general.EdgeDetectionAlgorithm" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/algorithms/general/EdgeDetectionAlgorithm.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="540" width="461" x="1061" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="com.mpanek.algorithms.general.BinarizationAlgorithm" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/algorithms/general/BinarizationAlgorithm.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="498" width="440" x="479" y="1058"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <association id="6">    
+    <end type="SOURCE" refId="3" navigable="false">      
+      <attribute id="7" name="histogramEqualizationAlgorithm"/>      
+      <multiplicity id="8" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="1" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="9">    
+    <end type="SOURCE" refId="3" navigable="false">      
+      <attribute id="10" name="claheAlgorithm"/>      
+      <multiplicity id="11" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="2" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="12">    
+    <end type="SOURCE" refId="3" navigable="false">      
+      <attribute id="13" name="binarizationAlgorithm"/>      
+      <multiplicity id="14" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="5" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true" static="true"/>    
+    <operations public="true" package="true" protected="true" private="true" static="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>

@@ -58,7 +58,6 @@ containing a value of this type.
         public static final int clipLimitSeekBar=0x7f050013;
         public static final int clipLimitValueText=0x7f050015;
         public static final int custom_camera_view=0x7f050004;
-        public static final int detectionFlagButton=0x7f05003a;
         public static final int erosionNameText=0x7f050029;
         public static final int erosionSeekBar=0x7f050028;
         public static final int erosionValueText=0x7f05002a;
@@ -121,6 +120,7 @@ containing a value of this type.
         public static final int showHideGui=0x7f050039;
         public static final int showSeekBarsButton=0x7f050048;
         public static final int startDetectionButton=0x7f05003b;
+        public static final int takePictureButton=0x7f05003a;
         public static final int thresholdNameText=0x7f050035;
         public static final int thresholdSeekBar=0x7f050034;
         public static final int thresholdValueText=0x7f050036;

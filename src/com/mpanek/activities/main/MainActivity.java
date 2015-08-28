@@ -38,6 +38,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.graphics.Color;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -50,6 +51,7 @@ import android.view.OrientationEventListener;
 import android.view.SubMenu;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -130,6 +132,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	Map<String, TextView> verticalSeekBarsTextValues = new LinkedHashMap<String, TextView>();
 	Map<String, TextView> verticalSeekBarsTextNames = new LinkedHashMap<String, TextView>();
 
+	private Button startDrowsinessDetectionButton;
+	
 	private CheckBox gaussCheckbox;
 
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
@@ -307,6 +311,18 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		initVerticalSeekBars();
 
 		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
+		
+		startDrowsinessDetectionButton = (Button) findViewById(R.id.startDetectionButton);
+		startDrowsinessDetectionButton.setOnLongClickListener(new OnLongClickListener() {
+			@Override
+			public boolean onLongClick(View v) {
+				drowsinessDetector.setAllClosedEyeDetectionMethods(false);
+				drowsinessDetector.setSeparateEyesDetection(false);
+				drowsinessDetector.setMeanValuesHPA(true);
+				mViewMode = ViewModesConstants.VIEW_MODE_FINAL_SOLUTION;
+				return true;
+			}
+		});
 
 		isRawDataExists(this);
 	}
@@ -786,8 +802,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
 			currentlyUsedFrame = drowsinessDetector.processDetection(mGray, mRgba);
 			break;
+			
+		case ViewModesConstants.VIEW_MODE_FINAL_SOLUTION:
+			currentlyUsedFrame = drowsinessDetector.processDetectionFinal(mGray, mRgba);
+			break;
 
 		}
+		
+		VisualUtils.takePicture("mainPicture", currentlyUsedFrame, false);
 
 		return currentlyUsedFrame;
 	}
@@ -942,6 +964,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 		popup.show();
 	}
+	
+	public void takePicture(View v){
+		Button pictureTakingButton = (Button) findViewById(R.id.takePictureButton);
+		if (VisualUtils.isPictureTakingAllowed){
+			VisualUtils.isPictureTakingAllowed = false;
+			pictureTakingButton.setBackgroundColor(Color.GREEN);
+		} else {
+			VisualUtils.isPictureTakingAllowed = true;
+			pictureTakingButton.setBackgroundColor(Color.RED);
+		}
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -1043,40 +1076,38 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization", "DarkBright - simple binarization",
 								"Edge detection - Laplacian", "Mean values vertical projection analysis", "Intensity vertical projection analysis",
 								"Mean values horizontal projection analysis", "Intensity horizontal projection analysis", "Do nothing" };
+						drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 						drowsinessDetector.setAdaptiveBinarizationUsed(true);
-						drowsinessDetector.setProjectionAnalysis(false);
-						drowsinessDetector.setSimpleBinarizationUsed(false);
-						drowsinessDetector.setLaplacianAlgorithmUsed(false);
-						drowsinessDetector.setMeanValuesVPA(false);
-						drowsinessDetector.setIntensityVPA(false);
-						drowsinessDetector.setDoNothing(false);
-						drowsinessDetector.setMeanValuesHPA(false);
-						drowsinessDetector.setIntensityHPA(false);
 						builder.setSingleChoiceItems(algorithms, 0, new OnClickListener() {
 							@Override
 							public void onClick(DialogInterface arg0, int arg1) {
 								if (arg1 == 0) {
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setAdaptiveBinarizationUsed(true);
 								} else if (arg1 == 1) {
-									drowsinessDetector.setAdaptiveBinarizationUsed(false);
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setSimpleBinarizationUsed(true);
 								} else if (arg1 == 2) {
-									drowsinessDetector.setAdaptiveBinarizationUsed(false);
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setLaplacianAlgorithmUsed(true);
 								} else if (arg1 == 3) {
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setMeanValuesVPA(true);
 								} else if (arg1 == 4) {
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setIntensityVPA(true);
 								} else if (arg1 == 5){
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setMeanValuesHPA(true);
 								} else if (arg1 == 6){
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setIntensityHPA(true);
 								} else if (arg1 == 7){
-									drowsinessDetector.setAdaptiveBinarizationUsed(false);
+									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setDoNothing(true);
 								}
 							}

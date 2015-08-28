@@ -99,4 +99,5 @@ public class CustomCameraView extends JavaCameraView implements PictureCallback 
 		}
 
 	}
+
 }

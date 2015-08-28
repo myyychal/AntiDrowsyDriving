@@ -296,7 +296,8 @@ public class DarkBrightRatioAlgorithm {
 			}
 			if ((buff[i] & 0xff) >= rangeFrom && (buff[i] & 0xff) <= rangeTo
 					&& j > horizontalBorders && j< frame.height() - horizontalBorders){
-				buff[i] = (byte) ((buff[i] & 0xff) - 50);
+				//buff[i] = (byte) ((buff[i] & 0xff) - 50);
+				buff[i] = (byte) rangeFrom;
 			}
 		}
 		frame.put(0,0,buff);

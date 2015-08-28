@@ -457,13 +457,13 @@
             android:text="Show/hide GUI" />
 
         <Button
-            android:id="@+id/detectionFlagButton"
+            android:id="@+id/takePictureButton"
             style="?android:attr/buttonStyleSmall"
             android:layout_column="2"
             android:layout_gravity="left|center_vertical"
             android:layout_row="1"
-            android:onClick="changeDetectionFlag"
-            android:text="Detection flag" />
+            android:onClick="takePicture"
+            android:text="Take pictures" />
 
         <Button
             android:id="@+id/startDetectionButton"

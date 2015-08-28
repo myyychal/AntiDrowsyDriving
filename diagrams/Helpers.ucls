@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.1.8" icons="true" automaticImage="PNG" always-add-relationships="true" generalizations="true" 
+  realizations="true" associations="true" dependencies="true" nesting-relationships="true">  
+  <class id="1" language="java" name="com.mpanek.utils.MathUtils" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/utils/MathUtils.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="393" width="580" x="1881" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="2" language="java" name="com.mpanek.utils.DrawingUtils" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/utils/DrawingUtils.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="372" width="468" x="1373" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="com.mpanek.utils.VisualUtils" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/utils/VisualUtils.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1169" y="650"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="android.widget.VerticalTextView" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/android/widget/VerticalTextView.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="162" width="297" x="2501" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="android.widget.VerticalSeekBar" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/android/widget/VerticalSeekBar.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="225" width="320" x="1013" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="6" language="java" name="com.mpanek.constants.ViewModesConstants" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/constants/ViewModesConstants.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="855" width="607" x="366" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="7" language="java" name="com.mpanek.constants.DrawingConstants" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/constants/DrawingConstants.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1671" y="692"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="8" language="java" name="com.mpanek.constants.DetectorConstants" project="AntiDrowsyDriving" 
+    file="/AntiDrowsyDriving/src/com/mpanek/constants/DetectorConstants.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="519" width="285" x="41" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <dependency id="9">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="7"/>  
+  </dependency>  
+  <dependency id="10">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="3"/>  
+  </dependency>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true" static="true"/>    
+    <operations public="true" package="true" protected="true" private="true" static="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>
