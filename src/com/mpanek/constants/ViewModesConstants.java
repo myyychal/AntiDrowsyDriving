@@ -6,6 +6,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_EQ_HIST_CPP = 5;
 	public static final int VIEW_MODE_EQ_NONE = 3;
 	public static final int VIEW_MODE_EQ_HIST_JAVA = 25;
+	public static final int VIEW_MODE_INCREASE_CONTRAST = 38;
 	public static final int VIEW_MODE_FIND_CORNER_HARRIS_CPP = 18;
 	public static final int VIEW_MODE_FIND_CORNER_HARRIS_JAVA = 16;
 	public static final int VIEW_MODE_FIND_EYES_CASCADE_CPP = 10;
@@ -38,6 +39,7 @@ public class ViewModesConstants {
 	public static final int VIEW_MODE_LAPLACIAN_EDGE_ADVANCED = 35;
 	public static final int VIEW_MODE_MEAN_VALUES_VERTICAL_PROJECTION_ANALYSIS = 36;
 	public static final int VIEW_MODE_INTENSITY_VERTICAL_PROJECTION_ANALYSIS = 37;
+	public static final int VIEW_MODE_PREPARE_IMAGES = 98;
 	public static final int VIEW_MODE_FINAL_SOLUTION = 99;
 	
 }

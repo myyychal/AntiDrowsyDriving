@@ -72,8 +72,13 @@ public class VisualUtils {
 		Imgproc.resize(frame, frame, new Size(scale * frame.width(), scale * frame.height()));
 	}
 
-	public static void takePicture(String fileName, Mat frameToSave, boolean isNameWithTimestamp) {
+	public static void takePicture(String fileName, Mat frame, boolean isNameWithTimestamp) {	
 		if (isPictureTakingAllowed) {
+			
+			if (frame.channels() == 3){
+				Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2RGB);
+			}
+			
 			File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "AntiDrowsyDriving");
 
 			if (!mediaStorageDir.exists()) {
@@ -92,7 +97,7 @@ public class VisualUtils {
 				mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName + ".png");
 			}
 
-			Highgui.imwrite(mediaFile.toString(), frameToSave);
+			Highgui.imwrite(mediaFile.toString(), frame);
 		}
 	}
 

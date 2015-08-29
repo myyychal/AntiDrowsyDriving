@@ -16,7 +16,9 @@ public class DrawingUtils {
 	private static final String TAG = "AntiDrowsyDriving::DrawingUtils";
 
 	public static void drawRect(Rect rect, Mat imgToDraw, Scalar color, int thickness) {
-		Core.rectangle(imgToDraw, rect.tl(), rect.br(), color, thickness);
+		if(rect!= null){
+			Core.rectangle(imgToDraw, rect.tl(), rect.br(), color, thickness);
+		}
 	}
 
 	public static void drawRect(Rect rect, Mat imgToDraw, Scalar color) {

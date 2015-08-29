@@ -8,7 +8,13 @@ public class MainActivityHelper {
 
 	public static int getViewMode(MenuItem item) {
 		int mViewMode = ViewModesConstants.VIEW_MODE_NONE;
-		if (item.getGroupId() == 1) {
+		if (item.getGroupId() == 0) {
+			switch (item.getItemId()) {
+			case 0:
+				mViewMode = ViewModesConstants.VIEW_MODE_PREPARE_IMAGES;
+				break;
+			}
+		} else if (item.getGroupId() == 1) {
 			switch (item.getItemId()) {
 			case 0:
 				mViewMode = ViewModesConstants.VIEW_MODE_FIND_FACE_SNAPDRAGON;
@@ -134,6 +140,9 @@ public class MainActivityHelper {
 				break;
 			case 3:
 				mEqHistMode = ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP;
+				break;
+			case 4:
+				mEqHistMode = ViewModesConstants.VIEW_MODE_INCREASE_CONTRAST;
 				break;
 			}
 		}

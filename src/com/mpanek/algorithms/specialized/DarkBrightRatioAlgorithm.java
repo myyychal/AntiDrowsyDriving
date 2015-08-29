@@ -2,7 +2,6 @@ package com.mpanek.algorithms.specialized;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -11,13 +10,12 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import android.util.Log;
-
 import com.mpanek.algorithms.general.BinarizationAlgorithm;
 import com.mpanek.algorithms.general.ClaheAlgorithm;
 import com.mpanek.algorithms.general.HistogramEqualizationAlgorithm;
 import com.mpanek.constants.DrawingConstants;
 import com.mpanek.utils.MathUtils;
+import com.mpanek.utils.VisualUtils;
 
 public class DarkBrightRatioAlgorithm {
 	
@@ -81,12 +79,13 @@ public class DarkBrightRatioAlgorithm {
 
 	public void claheEqualizeSimpleBinarizeAndOpenOperation(Mat frame) {
 		claheAlgorithm.process(frame);
+
 		if (frame.channels() == 3) {
 			Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
 		}
 		binarizationAlgorithm.standardBinarization(frame);
-
 		performOpenOperation(frame);
+		
 	}
 	
 	public void claheEqualizeAdaptiveBinarizeAndOpenOperation(Mat frame) {
@@ -297,7 +296,7 @@ public class DarkBrightRatioAlgorithm {
 			if ((buff[i] & 0xff) >= rangeFrom && (buff[i] & 0xff) <= rangeTo
 					&& j > horizontalBorders && j< frame.height() - horizontalBorders){
 				//buff[i] = (byte) ((buff[i] & 0xff) - 50);
-				buff[i] = (byte) rangeFrom;
+				buff[i] = (byte) 100;
 			}
 		}
 		frame.put(0,0,buff);

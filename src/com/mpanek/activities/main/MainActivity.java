@@ -42,6 +42,7 @@ import android.graphics.Color;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -133,7 +134,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	Map<String, TextView> verticalSeekBarsTextNames = new LinkedHashMap<String, TextView>();
 
 	private Button startDrowsinessDetectionButton;
-	
+
 	private CheckBox gaussCheckbox;
 
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
@@ -191,6 +192,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	private static boolean isMouthChosen = false;
 
 	private int gaussSize = 1;
+	private int contrastEnhancer = 1;
 
 	GaussBlurAsyncTask gaussBlurAsyncTask = new GaussBlurAsyncTask(currentlyUsedFrame, gaussSize);
 	FaceDetectionAsyncTask faceDetectionAsyncTask = new FaceDetectionAsyncTask(currentlyUsedFrame, cascadeFaceDetector);
@@ -307,11 +309,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		drowsinessDetector.setCascadeLeftEyeDetector(cascadeLeftEyeDetector);
 		drowsinessDetector.setCascadeRightEyeDetector(cascadeRightEyeDetector);
 		drowsinessDetector.setSeparateEyesDetection(false);
+		drowsinessDetector.setVibrator((Vibrator) getSystemService(Context.VIBRATOR_SERVICE));
 
 		initVerticalSeekBars();
 
 		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
-		
+
 		startDrowsinessDetectionButton = (Button) findViewById(R.id.startDetectionButton);
 		startDrowsinessDetectionButton.setOnLongClickListener(new OnLongClickListener() {
 			@Override
@@ -319,7 +322,30 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 				drowsinessDetector.setSeparateEyesDetection(false);
 				drowsinessDetector.setMeanValuesHPA(true);
-				mViewMode = ViewModesConstants.VIEW_MODE_FINAL_SOLUTION;
+				drowsinessDetector.setMeanValuesVPA(true);
+				AlertDialog dialog;
+				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				builder.setTitle("Select algorithm to detect closed eyes");
+				CharSequence[] items = new CharSequence[] { "Mean HPA", "Mean VPA" };
+				boolean[] checkedItems = new boolean[] { true, true };
+				builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+						if (indexSelected == 0) {
+							drowsinessDetector.setMeanValuesHPA(isChecked);
+						} else {
+							drowsinessDetector.setMeanValuesVPA(isChecked);
+						}
+					}
+				});
+				builder.setPositiveButton("Ok", new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						mViewMode = ViewModesConstants.VIEW_MODE_FINAL_SOLUTION;
+					}
+				});
+				dialog = builder.create();
+				dialog.show();
 				return true;
 			}
 		});
@@ -474,6 +500,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_EQ_HIST_CLAHE_CPP:
 			claheAlgorithm.process(currentlyUsedFrame);
 			break;
+
+		case ViewModesConstants.VIEW_MODE_INCREASE_CONTRAST:
+			currentlyUsedFrame.convertTo(currentlyUsedFrame, -1, contrastEnhancer, 0);
+			break;
 		}
 
 		switch (viewMode) {
@@ -488,11 +518,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 			Rect face = cascadeFaceDetector.findFace(currentlyUsedFrame);
 			if (face != null) {
-				DrawingUtils.drawRect(face, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
+				DrawingUtils.drawRect(face, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR, 5);
 				// Mat imgToFindWithROI = new Mat(currentlyUsedFrame, face);
 				// imgToFindWithROI.copyTo(currentlyUsedFrame.submat(0,
 				// imgToFindWithROI.height(), 0, imgToFindWithROI.width()));
 			}
+			VisualUtils.takePicture("faceHaarCascade", currentlyUsedFrame, false);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_CPP:
@@ -529,6 +560,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_JAVA:
 			currentlyUsedFrame = colorSegmentationFaceDetector.detectFaceYCrCb(currentlyUsedFrame);
+			darkBrightRatioAlgorithm.performErodeOperation(currentlyUsedFrame, 5);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_FACE_COLOR_SEGMENTATION_CPP:
@@ -543,10 +575,11 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				foundFace = cascadeFaceDetector.getLastFoundFace();
 			}
 			if (foundFace != null) {
-				DrawingUtils.drawRect(foundFace, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR);
+				DrawingUtils.drawRect(foundFace, currentlyUsedFrame, DrawingConstants.FACE_RECT_COLOR, 4);
 				Rect[] eyes = cascadeEyesDetector.findEyes(mGray, foundFace, false);
-				DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR);
+				DrawingUtils.drawRects(eyes, currentlyUsedFrame, DrawingConstants.EYES_RECT_COLOR, 5);
 			}
+			VisualUtils.takePicture("eyesHaarCascade", currentlyUsedFrame, false);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_EYES_CASCADE_CPP:
@@ -668,9 +701,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				Point pt;
 				for (int i = 0; i < points.length / 2; ++i) {
 					pt = new Point(points[i * 2], points[i * 2 + 1]);
-					Core.circle(currentlyUsedFrame, pt, 4, DrawingConstants.GREEN);
+					Core.circle(currentlyUsedFrame, pt, 4, DrawingConstants.GREEN, 3);
 				}
 			}
+			VisualUtils.takePicture("stasm", currentlyUsedFrame, false);
 			break;
 
 		case ViewModesConstants.VIEW_MODE_FIND_ALL:
@@ -706,45 +740,30 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 					nose = cascadeNoseDetector.getLastFoundNose();
 				}
 
-				ArrayList<Float> characteristicPoints = new ArrayList<Float>();
-				if (eyes != null && eyes.length > 0) {
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[0]).x);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[0]).y);
-					if (eyes.length == 2) {
-						characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[1]).x);
-						characteristicPoints.add((float) VisualUtils.getCentrePoint(eyes[1]).y);
-					}
+				ArrayList<Rect> allDetectedRects = new ArrayList<Rect>();
+				if (foundFaceInDetection != null) {
+					allDetectedRects.add(foundFaceInDetection);
 				}
-				if (nose != null) {
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(nose).x);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(nose).y);
+				for (Rect eyeRect : eyes) {
+					if (eyeRect != null) {
+						allDetectedRects.add(eyeRect);
+					}
 				}
 				if (mouth != null) {
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x - 5);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).x + 5);
-					characteristicPoints.add((float) VisualUtils.getCentrePoint(mouth).y);
+					allDetectedRects.add(mouth);
 				}
-				float[] floatArray = new float[characteristicPoints.size()];
-				int iter = 0;
-				for (Float f : characteristicPoints) {
-					floatArray[iter++] = (f != null ? f : Float.NaN);
+				if (nose != null) {
+					allDetectedRects.add(nose);
 				}
-				if (floatArray != null && floatArray.length == 10) {
-					int[] kpoints = AddFaceLandmarks(mGray.getNativeObjAddr(), floatArray);
-					if (kpoints[0] > 0) {
-						Point pt;
-						for (int i = 0; i < kpoints.length / 2; ++i) {
-							pt = new Point(kpoints[i * 2], kpoints[i * 2 + 1]);
-							Core.circle(mRgba, pt, 4, DrawingConstants.GREEN);
-						}
-					}
-				}
+				DrawingUtils.drawLinesFromRectanglesCentres(allDetectedRects.toArray(new Rect[allDetectedRects.size()]), mRgba,
+						DrawingConstants.WHITE, 3);
 
-				DrawingUtils.drawRect(foundFaceInDetection, mRgba, DrawingConstants.FACE_RECT_COLOR);
-				DrawingUtils.drawRects(eyes, mRgba, DrawingConstants.EYES_RECT_COLOR);
-				DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR);
-				DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR);
+				DrawingUtils.drawRect(foundFaceInDetection, mRgba, DrawingConstants.FACE_RECT_COLOR, 2);
+				DrawingUtils.drawRects(eyes, mRgba, DrawingConstants.EYES_RECT_COLOR, 2);
+				DrawingUtils.drawRect(mouth, mRgba, DrawingConstants.MOUTH_RECT_COLOR, 2);
+				DrawingUtils.drawRect(nose, mRgba, DrawingConstants.NOSE_RECT_COLOR, 2);
+
+				VisualUtils.takePicture("faceTriangle", currentlyUsedFrame, false);
 			}
 
 			break;
@@ -802,14 +821,55 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		case ViewModesConstants.VIEW_MODE_START_DROWSINESS_DETECTION:
 			currentlyUsedFrame = drowsinessDetector.processDetection(mGray, mRgba);
 			break;
-			
+
 		case ViewModesConstants.VIEW_MODE_FINAL_SOLUTION:
 			currentlyUsedFrame = drowsinessDetector.processDetectionFinal(mGray, mRgba);
-			break;
+			return mRgba;
 
+		case ViewModesConstants.VIEW_MODE_PREPARE_IMAGES:
+			VisualUtils.takePicture("beforeEverything", mGray, false);
+
+			Mat standardBinFrame = mGray.clone();
+			binarizationAlgorithm.setThreshold((int) Core.mean(standardBinFrame).val[0]);
+			binarizationAlgorithm.standardBinarization(standardBinFrame);
+			VisualUtils.takePicture("afterStandardBin", standardBinFrame, false);
+
+			Mat adaptiveBinFrame = mGray.clone();
+			binarizationAlgorithm.adaptiveMeanBinarization(adaptiveBinFrame);
+			VisualUtils.takePicture("afterAdaptiveBin", adaptiveBinFrame, false);
+
+			Mat gaussFrame = mGray.clone();
+			Imgproc.GaussianBlur(currentlyUsedFrame, gaussFrame, new Size(13, 13), 0);
+			VisualUtils.takePicture("afterGauss", gaussFrame, false);
+
+			Mat laplacianFrame = mGray.clone();
+			edgeDetectionAlgorithm.laplacianEdgeDetection(laplacianFrame);
+			VisualUtils.takePicture("afterLaplacian", laplacianFrame, false);
+
+			Mat cannyFrame = mGray.clone();
+			edgeDetectionAlgorithm.cannyEdgeDetection(cannyFrame);
+			VisualUtils.takePicture("afterCanny", laplacianFrame, false);
+
+			Mat erosionFrame = mGray.clone();
+			binarizationAlgorithm.adaptiveMeanBinarization(erosionFrame);
+			darkBrightRatioAlgorithm.performErodeOperation(erosionFrame, 3);
+			VisualUtils.takePicture("afterErosion", erosionFrame, false);
+
+			Mat dilatationFrame = mGray.clone();
+			binarizationAlgorithm.adaptiveMeanBinarization(dilatationFrame);
+			darkBrightRatioAlgorithm.performDilateOperation(dilatationFrame, 3);
+			VisualUtils.takePicture("afterDilatation", dilatationFrame, false);
+
+			Mat standardEqualizationFrame = mGray.clone();
+			histogramEqualizationAlgorithm.standardEqualizationJava(standardEqualizationFrame);
+			VisualUtils.takePicture("afterStandardEqualization", standardEqualizationFrame, false);
+
+			Mat claheEqualizationFrame = mGray.clone();
+			claheAlgorithm.process(claheEqualizationFrame);
+			VisualUtils.takePicture("afterClaheEqualization", standardEqualizationFrame, false);
+
+			break;
 		}
-		
-		VisualUtils.takePicture("mainPicture", currentlyUsedFrame, false);
 
 		return currentlyUsedFrame;
 	}
@@ -964,10 +1024,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		});
 		popup.show();
 	}
-	
-	public void takePicture(View v){
+
+	public void takePicture(View v) {
 		Button pictureTakingButton = (Button) findViewById(R.id.takePictureButton);
-		if (VisualUtils.isPictureTakingAllowed){
+		if (VisualUtils.isPictureTakingAllowed) {
 			VisualUtils.isPictureTakingAllowed = false;
 			pictureTakingButton.setBackgroundColor(Color.GREEN);
 		} else {
@@ -979,6 +1039,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		Log.i(TAG, "called onCreateOptionsMenu");
+		menu.add(0, 0, Menu.NONE, "Prepare images");
 		SubMenu mItemPreviewFindFaceMenu = menu.addSubMenu("Find face");
 		SubMenu mItemPreviewFindEyesMenu = menu.addSubMenu("Find eyes");
 		SubMenu mItemPreviewFindMouthMenu = menu.addSubMenu("Find mouth");
@@ -1006,6 +1067,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		mItemPreviewEqHistMenu.add(4, 1, Menu.NONE, "Standard (Java)");
 		mItemPreviewEqHistMenu.add(4, 2, Menu.NONE, "Standard (Cpp)");
 		mItemPreviewEqHistMenu.add(4, 3, Menu.NONE, "CLAHE");
+		mItemPreviewEqHistMenu.add(4, 4, Menu.NONE, "Increase contrast");
 
 		mItemPreviewEdgeDetectionMenu.add(9, 0, Menu.NONE, "Canny");
 		mItemPreviewEdgeDetectionMenu.add(9, 1, Menu.NONE, "Sobel");
@@ -1098,15 +1160,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setIntensityVPA(true);
-								} else if (arg1 == 5){
+								} else if (arg1 == 5) {
 									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setMeanValuesHPA(true);
-								} else if (arg1 == 6){
+								} else if (arg1 == 6) {
 									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setProjectionAnalysis(true);
 									drowsinessDetector.setIntensityHPA(true);
-								} else if (arg1 == 7){
+								} else if (arg1 == 7) {
 									drowsinessDetector.setAllClosedEyeDetectionMethods(false);
 									drowsinessDetector.setDoNothing(true);
 								}
@@ -1309,6 +1371,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				int currentValue = ((progress * (DetectorConstants.MAX_MIN_NEIGHBOURS - DetectorConstants.MIN_MIN_NEIGHBOURS)) / 100)
 						+ DetectorConstants.MIN_MIN_NEIGHBOURS;
 				minNeighsValueText.setText(String.valueOf(MathUtils.round(currentValue, 2)));
+				contrastEnhancer = currentValue;
 				switch (mViewMode) {
 				case ViewModesConstants.VIEW_MODE_FIND_FACE_CASCADE_JAVA:
 					cascadeFaceDetector.setMinNeighbours(currentValue);
