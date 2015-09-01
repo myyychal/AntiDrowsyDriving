@@ -1,0 +1,97 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:opencv="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="clip_horizontal" >
+
+    <com.mpanek.views.camera.CustomCameraView
+        android:id="@+id/custom_camera_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        opencv:camera_id="any"
+        opencv:show_fps="true" />
+
+    <org.opencv.android.NativeCameraView
+        android:id="@+id/native_camera_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone"
+        opencv:camera_id="any"
+        opencv:show_fps="true" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:columnCount="6"
+        android:rowCount="8" >
+
+        <Space
+            android:layout_width="465dp"
+            android:layout_height="match_parent"
+            android:layout_column="2"
+            android:layout_rowSpan="8" />
+
+        <Button
+            android:id="@+id/showHideGui"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="2"
+            android:layout_gravity="left|top"
+            android:layout_row="1"
+            android:onClick="showHideGui"
+            android:text="Show/hide GUI" />
+
+        <Button
+            android:id="@+id/reset"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_column="5"
+            android:layout_gravity="right|top"
+            android:layout_row="1"
+            android:onClick="resetView"
+            android:text="RESET" />
+
+        <Button
+            android:id="@+id/startDetectionButton"
+            android:layout_height="36dp"
+            android:layout_column="2"
+            android:layout_gravity="left|bottom"
+            android:layout_row="7"
+            android:onClick="startDrowsinessDetection"
+            android:text="Start detection" />
+
+        <Button
+            android:id="@+id/resolutionButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_column="5"
+            android:layout_gravity="right|bottom"
+            android:layout_row="7"
+            android:onClick="changeResolution"
+            android:text="Resolution" />
+
+    </GridLayout>
+
+    <Button
+        android:id="@+id/stopAlarmButton"
+        android:layout_width="138dp"
+        android:layout_height="105dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center"
+        android:onClick="stopAlarm"
+        android:text="STOP ALARM!"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/coffeeImage"
+        android:alpha="0.5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/android_coffee" />
+
+</RelativeLayout>

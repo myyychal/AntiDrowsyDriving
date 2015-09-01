@@ -44,7 +44,7 @@ public class DrowsinessDetector {
 
 	private static final String TAG = "AntiDrowsyDriving::DrowsinessDetector";
 
-	final ToneGenerator tg;
+	final ToneGenerator toneGenerator;
 	Vibrator vibrator = null;
 
 	CascadeFaceDetector cascadeFaceDetector;
@@ -86,6 +86,9 @@ public class DrowsinessDetector {
 	private boolean isIntensityHPA = false;
 	private boolean isMeanValuesHPA = false;
 
+	private boolean isFirstMethod = true;
+	private boolean isSecondMethod = true;
+
 	int gaussianBlur = 5;
 
 	long frameCounter = 0;
@@ -96,26 +99,31 @@ public class DrowsinessDetector {
 	boolean isEyeClosedMeanHPA = false;
 	boolean isEyeClosedMeanVPA = false;
 
+	long startDrowsinessDetectionTime = 0;
+	
 	// firstMethod
 	int countOfClosedEyesFrames = 0;
 	int countOfOpenedEyesFrames = 0;
 	long startTimeOfCountingClosedEyes = 0;
-	final long timeForFirstMethod = 2000;
-	final long timeToReduceAlertCounter = 10000;
+	long timeForFirstMethod = 2000;
+	long alarmTimeForFirstMethod = 3500;
+	long timeToReduceAlertCounter = 10000;
 	long timeOfLastWarning = 0;
 	int firstMethodAlertCounter = 0;
-	final int maxFirstMethodAlertCounter = 15;
+	int maxFirstMethodAlertCounter = 10;
 
 	// secondMethod
-	final long timeForSecondMethod = 60000;
+	long timeForSecondMethod = 30000;
 	ArrayList<Long> eyeClosedTimes = new ArrayList<Long>();
 	ArrayList<Long> eyeOpenedTimes = new ArrayList<Long>();
 	Map<Long, Float> perclosRatioMap = new LinkedHashMap<Long, Float>();
 
-	boolean wasPrevFrameClosed = false;
-	long prevFrameTime = 0;
-	long summaryTimeOfClosedEyes = 0;
-	int countOfConsecutiveFramesWithOpenedEyesAfterClosedEyes = 0;
+	boolean isCoffeeNeeded = false;
+	boolean isMainAlarmOn = false;
+
+	long allMeanEyeClosed = 0;
+	long vpaEyeClosed = 0;
+	long hpaEyeClosed = 0;
 
 	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
 			CascadeMouthDetector cascadeMouthDetector, CascadeNoseDetector cascadeNoseDetector) {
@@ -125,7 +133,7 @@ public class DrowsinessDetector {
 		this.cascadeMouthDetector = cascadeMouthDetector;
 		this.cascadeNoseDetector = cascadeNoseDetector;
 		this.claheAlgorithm = new ClaheAlgorithm();
-		tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+		toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
 	}
 
 	public DrowsinessDetector(CascadeFaceDetector cascadeFaceDetector, CascadeEyesDetector cascadeEyesDetector,
@@ -140,7 +148,7 @@ public class DrowsinessDetector {
 		darkBrightRatioAlgorithm.getBinarizationAlgorithm().setBlockSize(45);
 		darkBrightRatioAlgorithm.setErosionSize(5);
 		this.edgeDetectionAlgorithm = edgeDetectionAlgorithm;
-		tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+		toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
 	}
 
 	public Mat processDetection(Mat mGray, Mat mRgba) {
@@ -255,7 +263,7 @@ public class DrowsinessDetector {
 				for (Mat eyeToShowAndProcess : eyesToShowAndProcess) {
 					if (!isProjectionAnalysis) {
 						if (isLaplacianAlgorithmUsed) {
-							
+
 							claheAlgorithm.process(eyeToShowAndProcess);
 							// Imgproc.equalizeHist(firstEyeToShow,
 							// firstEyeToShow);
@@ -264,17 +272,17 @@ public class DrowsinessDetector {
 								otherGaussianBlurSize += 1;
 							}
 							Imgproc.GaussianBlur(eyeToShowAndProcess, eyeToShowAndProcess, new Size(otherGaussianBlurSize, otherGaussianBlurSize), 0);
-							
+
 							edgeDetectionAlgorithm.laplacianAdvancedEdgeDetection(eyeToShowAndProcess);
-							
+
 							Scalar meanValues = Core.mean(eyeToShowAndProcess);
 							darkBrightRatioAlgorithm.getBinarizationAlgorithm().setThreshold((int) meanValues.val[0]);
 							darkBrightRatioAlgorithm.getBinarizationAlgorithm().adaptiveMeanBinarization(eyeToShowAndProcess);
-							
+
 							darkBrightRatioAlgorithm.performOpenOperation(eyeToShowAndProcess, 1);
 							darkBrightRatioAlgorithm.performErodeOperation(eyeToShowAndProcess, 1);
 							darkBrightRatioAlgorithm.performCloseOperation(eyeToShowAndProcess, 2);
-							
+
 							// darkBrightRatioAlgorithm.performErodeOperation(eyeToShowAndProcess,
 							// 1);
 							int sideMargin = (int) (eyeToShowAndProcess.width() / 2.7);
@@ -303,11 +311,11 @@ public class DrowsinessDetector {
 							DrawingUtils.drawLines(new Point[] { new Point(0, lastIndex), new Point(eyeToShowAndProcess.width(), lastIndex) },
 									eyeToShowAndProcess, DrawingConstants.WHITE);
 							roiMat.put(0, 0, buff);
-							
+
 						} else if (isSimpleBinarizationUsed) {
 							int sideMargin = (int) (firstEyeToShow.width() / 3.5);
 							DrawingUtils.removeVerticalBorders(firstEyeToShow, sideMargin, 0);
-							
+
 							Rect roi = new Rect(new Point(sideMargin, 0), new Point(firstEyeToShow.width() - sideMargin, firstEyeToShow.height()));
 							Mat roiMat = new Mat(firstEyeToShow, roi);
 
@@ -354,9 +362,9 @@ public class DrowsinessDetector {
 						darkBrightRatioAlgorithm.normalizeAndDrawVerticalProjectionAnalysisArrays(roiMat, vpaValuesArrayList);
 					} else if (isMeanValuesVPA) {
 						darkBrightRatioAlgorithm.fillWhiteSpots(firstEyeToShow, 190, 255, firstEyeToShow.height() / 4);
-						
+
 						VisualUtils.takePicture("DD_meanVPA2_fillWhite", firstEyeToShow.clone(), false);
-						
+
 						vpaValuesArrayList = darkBrightRatioAlgorithm.countMeanVerticalProjection(roiMat);
 						vpaValuesArrayList = MathUtils.applyMedianFilterOnLongArray(vpaValuesArrayList, 5);
 						ArrayList<Long> normalizedList = darkBrightRatioAlgorithm.normalizeAndDrawVerticalProjectionAnalysisArrays(roiMat,
@@ -370,7 +378,7 @@ public class DrowsinessDetector {
 								aboveValuesCounter++;
 							}
 						}
-						
+
 						int currentAboveCounterPercentage = aboveValuesCounter * 100 / normalizedList.size();
 						String currentAboveValuesCounterPercentageString = String.valueOf(currentAboveCounterPercentage).concat(" %");
 						DrawingUtils.putText(mGray, currentAboveValuesCounterPercentageString, new Point(0, firstEyeRowStart - 25));
@@ -398,7 +406,7 @@ public class DrowsinessDetector {
 						long diff = lastVal - firstVal;
 						DrawingUtils.drawLines(new Point[] { new Point(0, firstVal), new Point(roiMat.width() - 1, lastVal) }, roiMat,
 								DrawingConstants.WHITE);
-						
+
 						VisualUtils.takePicture("DD_meanVPA3_withGraph", firstEyeToShow.clone(), false);
 						ArrayList<Long> simpleLineValues = new ArrayList<Long>();
 						for (int i = 0; i < normalizedList.size(); i++) {
@@ -501,16 +509,22 @@ public class DrowsinessDetector {
 	public Mat processDetectionFinal(Mat mGray, Mat mRgba) {
 		isEyeClosedMeanHPA = false;
 		isEyeClosedMeanVPA = false;
-
+		
 		claheAlgorithm.process(mGray);
 		Imgproc.GaussianBlur(mGray, mGray, new Size(gaussianBlur, gaussianBlur), 0);
 
 		Rect foundFaceInDetection = new Rect(0, 0, mGray.width(), mGray.height());
 
 		Rect boundingBox = new Rect(0, 0, mGray.width(), mGray.height());
-		double boundingMultiplier = 0.1;
-		boundingBox.x += boundingMultiplier * mGray.width();
-		boundingBox.width -= 2 * boundingMultiplier * mGray.width();
+		double boundingMultiplierWidth = 0.15;
+		double boundingMultiplierHeight = 0.1;
+		boundingBox.x += boundingMultiplierWidth * mGray.width();
+		boundingBox.width -= 2 * boundingMultiplierWidth * mGray.width();
+		boundingBox.y += boundingMultiplierHeight * mGray.height();
+		boundingBox.height -= 2 * boundingMultiplierHeight * mGray.height();
+		
+		DrawingUtils.drawRect(boundingBox, mGray, DrawingConstants.WHITE);
+		
 		if (frameCounter < 5 || frameCounter % 4 == 0 || !isFaceFound) {
 			foundFaceInDetection = cascadeFaceDetector.findFace(mGray, boundingBox);
 			if (foundFaceInDetection == null) {
@@ -557,7 +571,7 @@ public class DrowsinessDetector {
 				ArrayList<Long> vpaValuesArrayList = null;
 
 				VisualUtils.resizeImage(firstEyeToShow, 3);
-				
+
 				Mat frameToSave = firstEyeToShow.clone();
 
 				claheAlgorithm.process(firstEyeToShow);
@@ -591,6 +605,8 @@ public class DrowsinessDetector {
 					if (currentAboveCounterPercentage < 35) {
 						isEyeClosedMeanVPA = true;
 					}
+				} else {
+					isEyeClosedMeanVPA = true;
 				}
 				if (isMeanValuesHPA) {
 					darkBrightRatioAlgorithm.fillWhiteSpots(vpaFrame, 190, 255, vpaFrame.height() / 4);
@@ -621,60 +637,89 @@ public class DrowsinessDetector {
 					if (currentAboveCounterPercentage < 50) {
 						isEyeClosedMeanHPA = true;
 					}
+				} else {
+					isEyeClosedMeanHPA = true;
 				}
 
 				long currentTime = System.currentTimeMillis();
+				
+				boolean isTimeToStartSecondMethod = false;
+				if (currentTime - startDrowsinessDetectionTime < timeForSecondMethod){
+					isTimeToStartSecondMethod = false;
+				} else {
+					isTimeToStartSecondMethod = true;
+				}
 
-				if (countOfOpenedEyesFrames == 0 && countOfClosedEyesFrames == 0) {
+				if (isFirstMethod && countOfOpenedEyesFrames == 0 && countOfClosedEyesFrames == 0) {
 					startTimeOfCountingClosedEyes = System.currentTimeMillis();
 				}
 
 				if (isEyeClosedMeanHPA && isEyeClosedMeanVPA) {
-					eyeClosedTimes.add(currentTime);
-					countOfClosedEyesFrames++;
+					if (isSecondMethod && isTimeToStartSecondMethod) {
+						eyeClosedTimes.add(currentTime);
+					}
+					if (isFirstMethod) {
+						countOfClosedEyesFrames++;
+					}
+					allMeanEyeClosed++;
 					VisualUtils.takePicture("closedEyeTest", frameToSave, true);
 				} else {
-					eyeOpenedTimes.add(currentTime);
-					countOfOpenedEyesFrames++;
-				}
-
-				for (Iterator<Long> iterator = eyeClosedTimes.iterator(); iterator.hasNext();) {
-					Long timeValue = iterator.next();
-					if (currentTime - timeValue > timeForSecondMethod) {
-						iterator.remove();
+					if (isSecondMethod) {
+						eyeOpenedTimes.add(currentTime);
+					}
+					if (isFirstMethod) {
+						countOfOpenedEyesFrames++;
 					}
 				}
- 
-				for (Iterator<Long> iterator = eyeOpenedTimes.iterator(); iterator.hasNext();) {
-					Long timeValue = iterator.next();
-					if (currentTime - timeValue > timeForSecondMethod) {
-						iterator.remove();
-					}
+				
+				if (isEyeClosedMeanHPA){
+					hpaEyeClosed++;
+				}
+				if (isEyeClosedMeanVPA){
+					vpaEyeClosed++;
 				}
 
-				float eyeClosedToAllEyeStatesRatio = (float)eyeClosedTimes.size() / (float)(eyeClosedTimes.size() + eyeOpenedTimes.size());
-				
-				Log.i(TAG, "eyeClosedToAllEyeStatesRatio: " + String.valueOf(eyeClosedToAllEyeStatesRatio));
-				Log.i(TAG, "eyeClosed: " + String.valueOf(eyeClosedTimes.size()));
-				Log.i(TAG, "eyeOpened: " + String.valueOf(eyeOpenedTimes.size()));
-				
-				perclosRatioMap.put(currentTime, eyeClosedToAllEyeStatesRatio);
+				if (isSecondMethod && isTimeToStartSecondMethod) {
+					for (Iterator<Long> iterator = eyeClosedTimes.iterator(); iterator.hasNext();) {
+						Long timeValue = iterator.next();
+						if (currentTime - timeValue > timeForSecondMethod) {
+							iterator.remove();
+						}
+					}
 
-				for (Iterator<Map.Entry<Long, Float>> it = perclosRatioMap.entrySet().iterator(); it.hasNext();) {
-					Map.Entry<Long, Float> entry = it.next();
-					if (currentTime - entry.getKey() > timeForSecondMethod) {
-						it.remove();
-						
-						tg.startTone(ToneGenerator.TONE_CDMA_INTERCEPT);
-//						
-//						Properties properties = new Properties();
+					for (Iterator<Long> iterator = eyeOpenedTimes.iterator(); iterator.hasNext();) {
+						Long timeValue = iterator.next();
+						if (currentTime - timeValue > timeForSecondMethod) {
+							iterator.remove();
+						}
+					}
+
+					float eyeClosedToAllEyeStatesRatio = (float) eyeClosedTimes.size() / (float) (eyeClosedTimes.size() + eyeOpenedTimes.size());
+
+					perclosRatioMap.put(currentTime, eyeClosedToAllEyeStatesRatio);
+					
+					if (eyeClosedToAllEyeStatesRatio > 0.3 && !isMainAlarmOn){
+						toneGenerator.startTone(ToneGenerator.TONE_SUP_ERROR);
+						firstMethodAlertCounter = 0;
+						isMainAlarmOn = true;
+					} else if (eyeClosedToAllEyeStatesRatio > 0.15){
+						isCoffeeNeeded = true;
+					} else {
+						isCoffeeNeeded = false;
+					}
+
+//					Properties properties = new Properties();
 //
-//						for (Map.Entry<Long,Float> entry2 : perclosRatioMap.entrySet()) {
-//						    properties.put(String.valueOf(entry2.getKey()), String.valueOf(entry2.getValue()));
-//						}
+//					for (Map.Entry<Long, Float> entry2 : perclosRatioMap.entrySet()) {
+//						properties.put(String.valueOf(entry2.getKey()), String.valueOf(entry2.getValue()));
+//					}
 //
+//					if (perclosRatioMap.size() > 0 && currentTime - perclosRatioMap.entrySet().iterator().next().getKey() > 5*60000) {
 //						try {
-//							File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "AntiDrowsyDriving");
+//							toneGenerator.startTone(ToneGenerator.TONE_CDMA_INTERCEPT);
+//							
+//							File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+//									"AntiDrowsyDriving");
 //
 //							if (!mediaStorageDir.exists()) {
 //								if (!mediaStorageDir.mkdirs()) {
@@ -692,44 +737,63 @@ public class DrowsinessDetector {
 //							// TODO Auto-generated catch block
 //							e.printStackTrace();
 //						}
-					}
-				}
-				
+//					}
 
-				DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(85, vpaRowToDraw - 55));
-				DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(85, vpaRowToDraw - 56));
-				DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(86, vpaRowToDraw - 55));
-				
-				if (currentTime - startTimeOfCountingClosedEyes > timeForFirstMethod) {
-					if ((countOfOpenedEyesFrames == 0 && countOfClosedEyesFrames != 0)
-							|| countOfClosedEyesFrames * 100 / countOfOpenedEyesFrames > 30) {
-						perclosRatioMap.put(currentTime, (float) 1.0);
-						tg.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
-//						if (vibrator != null) {
-//							vibrator.vibrate(100);
-//						}
-						firstMethodAlertCounter++;
+					// for (Iterator<Map.Entry<Long, Float>> it =
+					// perclosRatioMap.entrySet().iterator(); it.hasNext();) {
+					// Map.Entry<Long, Float> entry = it.next();
+					// if (currentTime - entry.getKey() > timeForSecondMethod) {
+					// it.remove();
+					// }
+					// }
+
+					DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(85, vpaRowToDraw - 55));
+					DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(85, vpaRowToDraw - 56));
+					DrawingUtils.putText(mGray, String.valueOf(eyeClosedToAllEyeStatesRatio), new Point(86, vpaRowToDraw - 55));
+
+				}
+
+				if (isFirstMethod) {
+					
+					if (currentTime - startTimeOfCountingClosedEyes > alarmTimeForFirstMethod){
+						toneGenerator.startTone(ToneGenerator.TONE_SUP_ERROR);
+						firstMethodAlertCounter = 0;
+						isMainAlarmOn = true;
+					}
+
+					if (currentTime - startTimeOfCountingClosedEyes > timeForFirstMethod) {
+						if ((countOfOpenedEyesFrames == 0 && countOfClosedEyesFrames != 0)
+								|| countOfClosedEyesFrames * 100 / countOfOpenedEyesFrames > 30) {
+							if (!isMainAlarmOn) {
+								toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
+							}
+							if (vibrator != null) {
+								vibrator.vibrate(100);
+							}
+							firstMethodAlertCounter++;
+							timeOfLastWarning = currentTime;
+						}
+						countOfOpenedEyesFrames = 0;
+						countOfClosedEyesFrames = 0;
+						startTimeOfCountingClosedEyes = currentTime;
+					}
+
+					if (currentTime - timeOfLastWarning > timeToReduceAlertCounter && firstMethodAlertCounter > 0) {
+						firstMethodAlertCounter--;
 						timeOfLastWarning = currentTime;
 					}
-					countOfOpenedEyesFrames = 0;
-					countOfClosedEyesFrames = 0;
-					startTimeOfCountingClosedEyes = currentTime;
-				}
 
-				if (currentTime - timeOfLastWarning > timeToReduceAlertCounter && firstMethodAlertCounter > 0) {
-					firstMethodAlertCounter--;
-					timeOfLastWarning = currentTime;
-				}
+					if (firstMethodAlertCounter == maxFirstMethodAlertCounter) {
+						toneGenerator.startTone(ToneGenerator.TONE_SUP_ERROR);
+						firstMethodAlertCounter = 0;
+						isMainAlarmOn = true;
+					}
 
-				if (firstMethodAlertCounter == 10) {
-					tg.startTone(ToneGenerator.TONE_SUP_ERROR);
-					firstMethodAlertCounter = 0;
 				}
 
 				darkBrightRatioAlgorithm.countMeanBlackAndWhitePixels(firstEyeToShow);
 				vpaFrame.copyTo(mGray.submat(vpaRowToDraw, vpaRowToDraw + vpaFrame.height(), 0, vpaFrame.width()));
-				// hpaFrame.copyTo(mGray.submat(hpaRowToDraw, hpaRowToDraw +
-				// hpaFrame.height(), 0, hpaFrame.width()));
+
 				DrawingUtils.putText(mGray, "meanValue: " + String.format("%.2f", darkBrightRatioAlgorithm.getMeanValuePixels()), new Point(0,
 						vpaRowToDraw + firstEyeToShow.height() + 20));
 			}
@@ -1074,6 +1138,10 @@ public class DrowsinessDetector {
 		return timeForFirstMethod;
 	}
 
+	public void setTimeForFirstMethod(long value) {
+		this.timeForFirstMethod = value;
+	}
+
 	public long getTimeToReduceAlertCounter() {
 		return timeToReduceAlertCounter;
 	}
@@ -1084,6 +1152,62 @@ public class DrowsinessDetector {
 
 	public long getTimeForSecondMethod() {
 		return timeForSecondMethod;
+	}
+
+	public void setTimeToReduceAlertCounter(long timeToReduceAlertCounter) {
+		this.timeToReduceAlertCounter = timeToReduceAlertCounter;
+	}
+
+	public void setMaxFirstMethodAlertCounter(int maxFirstMethodAlertCounter) {
+		this.maxFirstMethodAlertCounter = maxFirstMethodAlertCounter;
+	}
+
+	public void setTimeForSecondMethod(long timeForSecondMethod) {
+		this.timeForSecondMethod = timeForSecondMethod;
+	}
+
+	public boolean isMainAlarmOn() {
+		return isMainAlarmOn;
+	}
+
+	public void setMainAlarmOn(boolean isMainAlarmOn) {
+		this.isMainAlarmOn = isMainAlarmOn;
+	}
+
+	public ToneGenerator getToneGenerator() {
+		return toneGenerator;
+	}
+
+	public boolean isFirstMethod() {
+		return isFirstMethod;
+	}
+
+	public void setFirstMethod(boolean isFirstMethod) {
+		this.isFirstMethod = isFirstMethod;
+	}
+
+	public boolean isSecondMethod() {
+		return isSecondMethod;
+	}
+
+	public void setSecondMethod(boolean isSecondMethod) {
+		this.isSecondMethod = isSecondMethod;
+	}
+
+	public boolean isCoffeeNeeded() {
+		return isCoffeeNeeded;
+	}
+
+	public void setCoffeeNeeded(boolean isCoffeeNeeded) {
+		this.isCoffeeNeeded = isCoffeeNeeded;
+	}
+
+	public long getStartDrowsinessDetectionTime() {
+		return startDrowsinessDetectionTime;
+	}
+
+	public void setStartDrowsinessDetectionTime(long startDrowsinessDetectionTime) {
+		this.startDrowsinessDetectionTime = startDrowsinessDetectionTime;
 	}
 	
 }

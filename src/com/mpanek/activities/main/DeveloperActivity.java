@@ -40,10 +40,13 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.Color;
 import android.hardware.SensorManager;
+import android.media.ToneGenerator;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -57,6 +60,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.RelativeLayout;
@@ -88,8 +92,8 @@ import com.mpanek.utils.MathUtils;
 import com.mpanek.utils.VisualUtils;
 import com.mpanek.views.camera.CustomCameraView;
 
-public class MainActivity extends Activity implements CvCameraViewListener2 {
-	private static final String TAG = "AntiDrowsyDriving::MainActivity";
+public class DeveloperActivity extends Activity implements CvCameraViewListener2 {
+	private static final String TAG = "AntiDrowsyDriving::DeveloperActivity";
 
 	TextView scaleFactorValueText;
 	TextView minNeighsValueText;
@@ -135,6 +139,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	private Button startDrowsinessDetectionButton;
 
+	private Button stopAlarmButton;
+	
 	private CheckBox gaussCheckbox;
 
 	private int mCameraId = CameraBridgeViewBase.CAMERA_ID_FRONT;
@@ -243,7 +249,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		}
 	};
 
-	public MainActivity() {
+	public DeveloperActivity() {
 		Log.i(TAG, "Instantiated new " + this.getClass());
 	}
 
@@ -265,6 +271,14 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		}
 		return super.onTouchEvent(event);
 
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+			finish();
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 
 	/** Called when the activity is first created. */
@@ -314,6 +328,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 		initVerticalSeekBars();
 
 		gaussCheckbox = (CheckBox) findViewById(R.id.gaussCheckbox);
+		
+		stopAlarmButton = (Button)findViewById(R.id.stopAlarmButton);
 
 		startDrowsinessDetectionButton = (Button) findViewById(R.id.startDetectionButton);
 		startDrowsinessDetectionButton.setOnLongClickListener(new OnLongClickListener() {
@@ -324,7 +340,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				drowsinessDetector.setMeanValuesHPA(true);
 				drowsinessDetector.setMeanValuesVPA(true);
 				AlertDialog dialog;
-				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				AlertDialog.Builder builder = new AlertDialog.Builder(DeveloperActivity.this);
 				builder.setTitle("Select algorithm to detect closed eyes");
 				CharSequence[] items = new CharSequence[] { "Mean HPA", "Mean VPA" };
 				boolean[] checkedItems = new boolean[] { true, true };
@@ -341,7 +357,64 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				builder.setPositiveButton("Ok", new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface arg0, int arg1) {
-						mViewMode = ViewModesConstants.VIEW_MODE_FINAL_SOLUTION;
+
+						AlertDialog dialog;
+						AlertDialog.Builder builder = new AlertDialog.Builder(DeveloperActivity.this);
+						builder.setTitle("Select way to detect drowsiness");
+						CharSequence[] items = new CharSequence[] { "Long eye time closed", "PERCLOSE" };
+						boolean[] checkedItems = new boolean[] { true, true };
+						builder.setMultiChoiceItems(items, checkedItems, new Dialog.OnMultiChoiceClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+								if (indexSelected == 0) {
+									drowsinessDetector.setFirstMethod(isChecked);
+								} else {
+									drowsinessDetector.setSecondMethod(isChecked);
+								}
+							}
+						});
+						builder.setPositiveButton("Ok", new OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialoginterface, int i) {
+								LayoutInflater li = LayoutInflater.from(getBaseContext());
+								View promptsView = li.inflate(R.layout.drowiness_options, null);
+
+								final EditText maxEyeClosedTimeEditText = (EditText) promptsView.findViewById(R.id.maxEyeClosedTimeEditText);
+								final EditText warningsCounterEditText = (EditText) promptsView.findViewById(R.id.warningsCounterEditText);
+								final EditText warningCounterReduceTimeEditText = (EditText) promptsView
+										.findViewById(R.id.warningCounterReduceTimeEditText);
+								//final EditText perclosTimeEditText = (EditText) promptsView.findViewById(R.id.perclosTimeEditText);
+
+								maxEyeClosedTimeEditText.setText(String.valueOf(drowsinessDetector.getTimeForFirstMethod()));
+								warningsCounterEditText.setText(String.valueOf(drowsinessDetector.getMaxFirstMethodAlertCounter()));
+								warningCounterReduceTimeEditText.setText(String.valueOf(drowsinessDetector.getTimeToReduceAlertCounter()));
+								//perclosTimeEditText.setText(String.valueOf(drowsinessDetector.getTimeForSecondMethod()));
+
+								AlertDialog dialog;
+								AlertDialog.Builder builder = new AlertDialog.Builder(DeveloperActivity.this);
+								builder.setTitle("Parameters");
+								builder.setView(promptsView);
+								builder.setPositiveButton("Ok", new OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										drowsinessDetector.setTimeForFirstMethod(Long.parseLong(maxEyeClosedTimeEditText.getText().toString()));
+										drowsinessDetector.setMaxFirstMethodAlertCounter(Integer.parseInt(warningsCounterEditText.getText()
+												.toString()));
+										drowsinessDetector.setTimeToReduceAlertCounter(Long.parseLong(warningCounterReduceTimeEditText.getText()
+												.toString()));
+										//drowsinessDetector.setTimeForSecondMethod(Long.parseLong(perclosTimeEditText.getText().toString()));
+										mViewMode = ViewModesConstants.VIEW_MODE_FINAL_SOLUTION;
+									}
+								});
+								dialog = builder.create();
+								dialog.show();
+
+							}
+						});
+						dialog = builder.create();
+						dialog.show();
+
 					}
 				});
 				dialog = builder.create();
@@ -453,6 +526,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			currentlyUsedFrame = mRgba;
 		} else {
 			currentlyUsedFrame = mGray;
+		}
+
+		if (stopAlarmButton.getVisibility() != View.VISIBLE && drowsinessDetector.isMainAlarmOn()){
+	        runOnUiThread(new Runnable() {
+	            @Override
+	            public void run() {
+	    			stopAlarmButton.setVisibility(View.VISIBLE);
+	            }
+	        });
 		}
 
 		final int viewMode = mViewMode;
@@ -876,7 +958,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (item.getGroupId() == 4) {
-			mEqHistMode = MainActivityHelper.getHistMode(item);
+			mEqHistMode = DeveloperActivityHelper.getHistMode(item);
 		} else if (item.getGroupId() == 3) {
 			switch (item.getItemId()) {
 			case 0:
@@ -889,7 +971,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				break;
 			}
 		} else {
-			mViewMode = MainActivityHelper.getViewMode(item);
+			mViewMode = DeveloperActivityHelper.getViewMode(item);
 		}
 		return true;
 	}
@@ -927,6 +1009,17 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			isFaceTracking = true;
 		}
 		Toast.makeText(this, "Face tracking: " + String.valueOf(isFaceTracking), Toast.LENGTH_SHORT).show();
+	}
+	
+	public void stopAlarm(View v){
+		drowsinessDetector.setMainAlarmOn(false);
+		drowsinessDetector.getToneGenerator().startTone(ToneGenerator.TONE_PROP_BEEP);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+        		stopAlarmButton.setVisibility(View.INVISIBLE);
+            }
+        });
 	}
 
 	public void showCascadeEyesFilesMenu(final View v) {
@@ -1115,7 +1208,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				AlertDialog dialog1;
-				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				AlertDialog.Builder builder = new AlertDialog.Builder(DeveloperActivity.this);
 				builder.setTitle("Select eyes detection algorithm");
 				CharSequence[] algorithms = new CharSequence[] { "Pair of eyes", "Separate eyes" };
 				drowsinessDetector.setSeparateEyesDetection(false);
@@ -1133,7 +1226,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 					@Override
 					public void onClick(DialogInterface arg0, int arg1) {
 						AlertDialog dialog2;
-						AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+						AlertDialog.Builder builder = new AlertDialog.Builder(DeveloperActivity.this);
 						builder.setTitle("Select eye openess algorithm");
 						CharSequence[] algorithms = new CharSequence[] { "DarkBright - adaptive binarization", "DarkBright - simple binarization",
 								"Edge detection - Laplacian", "Mean values vertical projection analysis", "Intensity vertical projection analysis",
@@ -1215,7 +1308,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 				changeVisibiltyOfChildViews(((ViewGroup) parentView).getChildAt(i), visibiltyFlag);
 			}
 		} else {
-			if (!(parentView instanceof CustomCameraView || parentView.getId() == R.id.showHideGui)) {
+			if (!(parentView instanceof CustomCameraView 
+					|| parentView.getId() == R.id.showHideGui
+					|| parentView.getId() == R.id.stopAlarmButton)) {
 				parentView.setVisibility(visibiltyFlag);
 			}
 		}

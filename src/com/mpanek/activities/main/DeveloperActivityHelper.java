@@ -4,7 +4,7 @@ import com.mpanek.constants.ViewModesConstants;
 
 import android.view.MenuItem;
 
-public class MainActivityHelper {
+public class DeveloperActivityHelper {
 
 	public static int getViewMode(MenuItem item) {
 		int mViewMode = ViewModesConstants.VIEW_MODE_NONE;

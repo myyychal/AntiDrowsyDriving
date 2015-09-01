@@ -53,38 +53,38 @@ vector<float> mMOFerr;
 vector<Point> cornersThis, cornersPrev;
 int iGFFTMax = 40;
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_EqualizeHistogram(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_EqualizeHistogram(
 		JNIEnv*, jobject, jlong addrGray);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindFace(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_PrepareFindFace(
 		JNIEnv* jEnv, jobject, jstring jFileName);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindEyes(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_PrepareFindEyes(
 		JNIEnv* jEnv, jobject, jstring jFileName);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFace(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindFace(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgba);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHE(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_ApplyCLAHE(
 		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHEExt(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_ApplyCLAHEExt(
 		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit, jdouble tileWidth,
 		jdouble tileHeight);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_SegmentSkin(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_SegmentSkin(
 		JNIEnv*, jobject, jlong addrSrc, jlong addrDst);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFeatures(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindFeatures(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgb);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindCornerHarris(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindCornerHarris(
 		JNIEnv*, jobject, jlong addrGray, jlong addrDst);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_CalculateOpticalFlow(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_CalculateOpticalFlow(
 		JNIEnv*, jobject, jlong addrSrc, jlong addrDst);
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindFace(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_PrepareFindFace(
 		JNIEnv* jEnv, jobject, jstring jFileName) {
 	const char* jnamestr = jEnv->GetStringUTFChars(jFileName, NULL);
 	string stdFileName(jnamestr);
@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindF
 	};
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindEyes(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_PrepareFindEyes(
 		JNIEnv* jEnv, jobject, jstring jFileName) {
 	const char* jnamestr = jEnv->GetStringUTFChars(jFileName, NULL);
 	string stdFileName(jnamestr);
@@ -102,7 +102,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindE
 	};
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindFaceAndOther(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_PrepareFindFaceAndOther(
 		JNIEnv* jEnv, jobject, jstring jFileName) {
 	const char* jnamestr = jEnv->GetStringUTFChars(jFileName, NULL);
 	string stdFileName(jnamestr);
@@ -116,28 +116,28 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_PrepareFindF
 	};
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFace(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindFace(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgba) {
 	Mat& inputRGBFrame = *(Mat*) addrRgba;
 	Mat& inputGrayFrame = *(Mat*) addrGray;
 	detectFaceAndDisplay(inputRGBFrame, inputGrayFrame);
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindEyes(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindEyes(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgba) {
 	Mat& inputRGBFrame = *(Mat*) addrRgba;
 	Mat& inputGrayFrame = *(Mat*) addrGray;
 	detectEyesAndDisplay(inputRGBFrame, inputGrayFrame);
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFaceAndOther(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindFaceAndOther(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgba) {
 	Mat& inputRGBFrame = *(Mat*) addrRgba;
 	Mat& inputGrayFrame = *(Mat*) addrGray;
 	detectEyesAndDisplay(inputRGBFrame, inputGrayFrame);
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHE(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_ApplyCLAHE(
 		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit) {
 	Mat *src = (Mat*) addrSrc;
 	Ptr<CLAHE> clahe = createCLAHE();
@@ -162,7 +162,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHE(
 	}
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHEExt(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_ApplyCLAHEExt(
 		JNIEnv*, jobject, jlong addrSrc, jdouble clipLimit, jdouble tileWidth,
 		jdouble tileHeight) {
 	Mat *src = (Mat*) addrSrc;
@@ -192,7 +192,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_ApplyCLAHEEx
 
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_SegmentSkin(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_SegmentSkin(
 		JNIEnv*, jobject, jlong addrSrc, jlong addrDst) {
 	Mat& src = *(Mat*) addrSrc;
 	Mat& dst = *(Mat*) addrDst;
@@ -200,7 +200,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_SegmentSkin(
 	erode(dst, dst, Mat(), Point(-1, -1), 2, 1, 1);
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFeatures(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindFeatures(
 		JNIEnv*, jobject, jlong addrGray, jlong addrRgb) {
 
 	Mat& mGr = *(Mat*) addrGray;
@@ -216,7 +216,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindFeatures
 
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindCornerHarris(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_FindCornerHarris(
 		JNIEnv*, jobject, jlong addrGray, jlong addrDst) {
 	Mat& mGr = *(Mat*) addrGray;
 	Mat& dst_norm_scaled = *(Mat*) addrDst;
@@ -251,7 +251,7 @@ JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_FindCornerHa
 	dst_norm.release();
 }
 
-JNIEXPORT void JNICALL Java_com_mpanek_activities_main_MainActivity_CalculateOpticalFlow(
+JNIEXPORT void JNICALL Java_com_mpanek_activities_main_DeveloperActivity_CalculateOpticalFlow(
 		JNIEnv*, jobject, jlong addrSrc, jlong addrDst) {
 
 	Mat& mRgba = *(Mat*) addrSrc;
